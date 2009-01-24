@@ -103,7 +103,7 @@ public:
     template <typename T>
     param_setter& operator()(const std::string& param, T value)
     {
-      log_trace(__PRETTY_FUNCTION__);
+      log_trace("%s", __PRETTY_FUNCTION__);
       tray_.SetParameter(module_name_.c_str(), param.c_str(), value);
       return *this;
     }
