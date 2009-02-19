@@ -377,7 +377,7 @@ protected:
 
 };
 
-typedef shared_ptr<I3Module> I3ModulePtr;
+typedef boost::shared_ptr<I3Module> I3ModulePtr;
 
 #include "icetray/I3Factory.h"
 #endif // I3MODULE_H
