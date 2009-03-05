@@ -489,5 +489,10 @@ I3Tray::SetActiveContext(const I3Context* newactive)
   active_context_ = newactive;
 }
 
+const I3Context& GetActiveContext() 
+{
+  return I3Tray::GetActiveContext();
+}
+
 // test commit.
 
