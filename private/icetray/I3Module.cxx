@@ -106,15 +106,15 @@ I3Module::Flush()
 void 
 I3Module::Do(void (I3Module::*f)())
 {
-#ifndef I3_JEB
+//#ifndef I3_JEB
   I3Tray::SetActiveContext(&context_);
-#endif
+//#endif
 
   (this->*f)();
 
-#ifndef I3_JEB
+//#ifndef I3_JEB
   I3Tray::SetActiveContext(0);
-#endif
+//#endif
 
   for (outboxmap_t::iterator iter = outboxes_.begin();
        iter != outboxes_.end();
