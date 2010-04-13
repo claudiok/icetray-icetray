@@ -20,8 +20,15 @@
 #ifndef ICETRAY_LOG4CPLUSLOGGING_H_INCLUDED
 #define ICETRAY_LOG4CPLUSLOGGING_H_INCLUDED
 
+#include <stdexcept>
 #include <string>
+#include <stdarg.h>
 #include <stdio.h>
+
+#ifdef I3_ONLINE
+#  include <boost/thread/locks.hpp>
+#  include <boost/thread/mutex.hpp>
+#endif
 
 #undef PACKAGE
 #undef HAVE_STAT
@@ -36,17 +43,14 @@
  */ 
 namespace I3Logging 
 {
-  const size_t logbuf_size_ = 2048;
-  extern char logbuf_[logbuf_size_]; 
-
   /**
    * @brief This class is used in configuring the logging system
    * 
    * Making an instance of this class will configure the logging system by
    * first checking for a log4cplus.conf pointed to by the I3LOGGING_CONFIG 
-   * environment variable, then checking for a log4cplus.conf in 
-   * $I3_BUILD/log4cplus.conf.  Failing both of these, it defaults to something
-   * reasonable.
+   * environment variable, then checking for a log4cplus.conf in ./log4cplus.conf
+   * and $I3_BUILD/log4cplus.conf finally.  Failing all of these, it defaults
+   * to something reasonable.
    */
   struct Configurator 
   {
@@ -55,23 +59,91 @@ namespace I3Logging
      */
     Configurator();
   };
-
-};
+  
+  /** 
+   */
+  class Log4CPlusLogger
+  {
+   private:
+    static const size_t BUFFER_SIZE = 2048;
+#ifdef I3_ONLINE
+    static boost::mutex mtx_;
+#endif
+    static char buffer_[BUFFER_SIZE];
+    
+    
+    log4cplus::Logger logger_;
+    
+   public:
+    /** Default constructor.
+     * 
+     * 
+     */
+    Log4CPlusLogger() : logger_(log4cplus::Logger::getRoot()) {}
+    /** Constructor.
+     * 
+     * 
+     * 
+     * @param name 
+     */
+    Log4CPlusLogger(const log4cplus::tstring& name) : logger_(log4cplus::Logger::getInstance(name)) {}
+    /** Destructor.
+     */
+    ~Log4CPlusLogger() {}
+    /** 
+     * 
+     * @param ll 
+     * @param file 
+     * @param line 
+     * @format 
+     * 
+     */
+    void Log(log4cplus::LogLevel ll, const char* file, int line,
+             const char* format, ...)
+    {
+      if(logger_.isEnabledFor(ll))
+      {
+#ifdef I3_ONLINE
+        boost::lock_guard<boost::mutex> g(mtx_);
+#endif
+        va_list vl;
+        va_start(vl, format);
+        vsnprintf(buffer_, BUFFER_SIZE, format, vl);
+        va_end(vl);
+        logger_.log(ll, buffer_, file, line);
+      }
+    }
+    std::string LogAndReturn(log4cplus::LogLevel ll, const char* file, int line,
+                             const char* format, ...)
+    {
+#ifdef I3_ONLINE
+      boost::lock_guard<boost::mutex> g(mtx_);
+#endif
+      va_list vl;
+      va_start(vl, format);
+      vsnprintf(buffer_, BUFFER_SIZE, format, vl);
+      va_end(vl);
+      if(logger_.isEnabledFor(ll))
+        logger_.log(ll, buffer_, file, line);
+      
+      return buffer_;
+    }
+  };
+}
 
 /**
- * @brief A global function that will return a log4cplus::Logger for logging.  
+ * @brief A global function that will return a I3Logging::Logger for logging.  
  *
  * If a particular object wants a different logger it should implement 
  * a 'get_logger()' method so that the logging macros find it rather than
  * this global function.
  */
-log4cplus::Logger get_logger();
+I3Logging::Log4CPlusLogger get_logger();
 
-// implmentation macro of macros visible to user.
-#define LOG_IMPL(LEVEL, format, ...)					\
-  get_logger().isEnabledFor(::log4cplus::LEVEL ## _LOG_LEVEL) &&	\
-  snprintf(I3Logging::logbuf_, I3Logging::logbuf_size_, format, ##__VA_ARGS__), \
-    get_logger().log(::log4cplus::LEVEL ## _LOG_LEVEL, I3Logging::logbuf_, __FILE__, __LINE__)
+// implmentation macro of macros visible to user (with the exception of log_fatal).
+#define LOG_IMPL(LEVEL, format, ...)					                                        \
+  get_logger().Log(::log4cplus::LEVEL ## _LOG_LEVEL, __FILE__, __LINE__,              \
+                   format, ##__VA_ARGS__)
   
 /**
  * @brief log a message of the 'trace' priority.
@@ -120,8 +192,10 @@ log4cplus::Logger get_logger();
  * appends a '\n' so no need to do that when using this macro.
  * This guy also throws a fatal error
  */
-#define log_fatal(format, ...) LOG_IMPL(FATAL, format, ##__VA_ARGS__),	\
-    throw std::runtime_error(I3Logging::logbuf_)
+#define log_fatal(format, ...)                                        	              \
+  throw std::runtime_error(get_logger().LogAndReturn(log4cplus::FATAL_LOG_LEVEL,      \
+                                                     __FILE__, __LINE__,              \
+                                                     format, ##__VA_ARGS__))
 
 /**
  * @brief sets a logger for your class
@@ -136,12 +210,14 @@ log4cplus::Logger get_logger();
  * This function has to contain the call to ::get_logger() to ensure that 
  * the logging system has been configured before we getInstance of our logger.
  */
-#define SET_LOGGER(X)						\
-  static log4cplus::Logger get_logger()					\
-  {									\
-    static log4cplus::Logger global_logger_ = ::get_logger();		\
-    static log4cplus::Logger logger_(log4cplus::Logger::getInstance(X)); \
-    return logger_;							\
+#define SET_LOGGER(X)                                                                 \
+  static I3Logging::Log4CPlusLogger get_logger()                                      \
+  {                                                                                   \
+    static I3Logging::Log4CPlusLogger global_logger(::get_logger());                  \
+                                                                                      \
+    static I3Logging::Log4CPlusLogger logger(X);                                      \
+                                                                                      \
+    return logger;                                                                    \
   }
 
-#endif //ndef ICETRAY_LOG4CPLUSLOGGING_H_INCLUDED
+#endif //ifndef ICETRAY_LOG4CPLUSLOGGING_H_INCLUDED
