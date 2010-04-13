@@ -223,6 +223,11 @@ class I3Frame
    * @param drop True corresponds to <em>drop blobs</em>.
    */
   void drop_blobs(bool drop) { drop_blobs_ = drop; }
+  /** Determine policy: Drop the blobs after deserialization?
+   * 
+   * @return True corresponds to <em>drop blobs</em>.
+   */
+  bool drop_blobs() { return drop_blobs_; }
 
   size_type size() const { return map_.size(); }
   void clear() { map_.clear(); }
