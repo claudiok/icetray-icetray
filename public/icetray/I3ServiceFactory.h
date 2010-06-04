@@ -156,6 +156,8 @@ public:
 
   virtual void SetName(const std::string& name) { name_ = name; }
 
+  SET_LOGGER("I3ServiceFactory");
+
 protected:
 
   const I3Context& context_;
