@@ -5,13 +5,13 @@
 # 
 # $Id$
 # 
-# @version $Revision: 546 $
-# @date $LastChangedDate: 2011-01-13 17:43:35 -0500 (Thu, 13 Jan 2011) $
+# @version $Revision: 567 $
+# @date $LastChangedDate: 2011-01-21 09:25:02 -0500 (Fri, 21 Jan 2011) $
 # @author Jakob van Santen <vansanten@wisc.edu> $LastChangedBy$
 #
 
-from icecube.icetray import I3Module
-import unittest
+from icecube.icetray import I3ConditionalModule
+import unittest, sys
 
 def I3TestModuleFactory(*test_cases):
 	"""
@@ -31,13 +31,14 @@ class I3TimeHorizonCutTest(unittest.TestCase):
 		outlaunches = self.frame['InIceRawData_Horizon']
 		self.assert_(len(outlaunches) <= len(inlaunches))
 		
-tray.AddModule(I3TestModuleFactory(I3TimeHorizonCutTest), 'testify')
+tray.AddModule(icetray.I3TestModuleFactory(I3TimeHorizonCutTest), 'test',
+	If=lambda frame: 'InIceRawData' in frame and len(frame['InIceRawData']) > 0)
 
 	"""
-	class I3TestModule(I3Module):
+	class I3TestModule(I3ConditionalModule):
 		runner = unittest.TextTestRunner()
 		def __init__(self, context):
-			I3Module.__init__(self, context)
+			I3ConditionalModule.__init__(self, context)
 			self.AddOutBox("OutBox")
 			
 			self.suites = []
@@ -49,11 +50,23 @@ tray.AddModule(I3TestModuleFactory(I3TimeHorizonCutTest), 'testify')
 			pass
 		
 		def Physics(self, frame):
-			for case in test_cases:
+			result = None
+			
+			for case in self.test_cases:
 				case.frame = frame
 			for test in self.suites:
-				self.runner.run(test)
-			self.PushFrame(frame)
+				if result is None:
+					result = self.runner.run(test)
+				else:
+					result = self.runner.run(test, result)
+			
+			if not result.wasSuccessful():
+				# XXX TODO: is there a nicer way to pull the handbrake 
+				# so that the failure shows up in runtests.py?
+				raise AssertionError, "A test failed!"
+				self.RequestSuspension()
+			else:
+				self.PushFrame(frame)
 		
 		def Finish(self):
 			pass
