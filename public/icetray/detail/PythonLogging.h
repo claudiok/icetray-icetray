@@ -132,4 +132,4 @@ I3Logging::logger& get_logger();
   }
 
 
-#endif //ndef ICETRAY_PYTHONLOGGING_H_INCLUDED
+#endif //ifndef ICETRAY_PYTHONLOGGING_H_INCLUDED

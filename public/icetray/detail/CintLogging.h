@@ -27,4 +27,4 @@
 
 #  define SET_LOGGER(X) 
 
-#endif //ndef ICETRAY_CINTLOGGING_H_INCLUDED
+#endif //ifndef ICETRAY_CINTLOGGING_H_INCLUDED

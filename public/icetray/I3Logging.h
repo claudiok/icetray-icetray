@@ -46,4 +46,4 @@
 
 #include <icetray/detail/CLogging.h>
 
-#endif //ndef ICETRAY_I3LOGGING_H_INCLUDED
+#endif //ifndef ICETRAY_I3LOGGING_H_INCLUDED
