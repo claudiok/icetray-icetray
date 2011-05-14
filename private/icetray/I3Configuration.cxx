@@ -78,6 +78,12 @@ I3Configuration::Get(const string& name_) const
   return impl_->Get(name_);
 }
 
+std::string
+I3Configuration::GetDescription(const string& name_) const
+{
+  return impl_->GetParameter(name_).description();
+}
+
 void
 I3Configuration::Connect(const std::string& boxname, const std::string& modulename)
 {
