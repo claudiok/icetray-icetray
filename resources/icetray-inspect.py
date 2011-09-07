@@ -84,6 +84,8 @@ def display_config(mod, category):
 			config = inspect.get_configuration(mod)
 		except RuntimeError, e:
 			sys.stderr.write("Error constructing '%s': %s" % (mod, e))
+			if opts.xml:
+				print '</module>'
 			return False
 			
 		if not opts.names_only:
@@ -111,7 +113,7 @@ for project in args:
 	
 	try:
 		modname = project.replace('-','_')
-		module = __import__('icecube.%s' % modname, fromlist=[modname])
+		module = __import__('icecube.%s' % modname, globals(), locals(), [modname])
 		py_modules = inspect.harvest_subclasses(module)
 	except ImportError:
 		try:
