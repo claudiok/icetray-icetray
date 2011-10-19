@@ -253,6 +253,9 @@ class I3Frame
    * @return true, if something exists in the frame at slot <VAR>key</VAR>, otherwise false.
    */
   bool Has(const std::string& key) const { return map_.count(key); }
+  bool Has(const std::string& key, const Stream& stream) const;
+
+  I3Frame::Stream GetStop(const std::string& key) const;
 
   void merge(const I3Frame& rhs);
 

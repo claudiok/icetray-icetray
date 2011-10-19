@@ -199,6 +199,19 @@ void I3Frame::purge()
     Delete(keys[i]);
 }
 
+bool I3Frame::Has(const std::string& key, const Stream& stream) const
+{
+  for(map_t::const_iterator it = map_.begin(); it != map_.end(); it++)
+    {
+      if (it->second->stream != stream)
+        continue;
+      if (it->first == key)
+	return true;
+    }
+
+  return false;
+}
+
 void I3Frame::merge(const I3Frame& rhs)
 {
   for(map_t::const_iterator it = rhs.map_.begin();
@@ -223,6 +236,16 @@ void I3Frame::take(const I3Frame& rhs, const string& what, const string& as)
     map_[as] = iter->second;
   else
     log_fatal("attempt to take \"%s\" from a frame that doesn't have one", what.c_str());
+}
+
+I3Frame::Stream
+I3Frame::GetStop(const std::string& key) const
+{
+	map_t::const_iterator iter = map_.find(key);
+	if (iter == map_.end())
+		log_fatal("The key '%s' doesn't exist in this frame", key.c_str());
+	else
+		return iter->second->stream;
 }
 
 void I3Frame::Put(const string& name, I3FrameObjectConstPtr element)
