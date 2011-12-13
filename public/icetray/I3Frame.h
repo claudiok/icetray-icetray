@@ -399,7 +399,7 @@ class I3Frame
 
   template <typename IStreamT>
   bool 
-  load(IStreamT& is, const std::vector<std::string>& vs = std::vector<std::string>());
+  load(IStreamT& is, const std::vector<std::string>& vs = std::vector<std::string>(), bool verify_checksums = true);
 
   std::string Dump() const;
 
@@ -434,7 +434,7 @@ class I3Frame
   bool load_v4(IStreamT& ifs, const std::vector<std::string>& skip);
 
   template <typename IStreamT>
-  bool load_v5(IStreamT& ifs, const std::vector<std::string>& skip);
+  bool load_v5(IStreamT& ifs, const std::vector<std::string>& skip, bool verfy);
 
 
   friend std::ostream& operator<<(std::ostream& o, const I3Frame& frame);

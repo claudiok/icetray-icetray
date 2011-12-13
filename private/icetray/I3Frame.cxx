@@ -28,7 +28,6 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <boost/interprocess/streams/vectorstream.hpp>
-#include <boost/crc.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <boost/format.hpp>
@@ -40,6 +39,7 @@
 #include <icetray/I3Frame.h>
 #include <icetray/I3Tray.h>
 
+#include "crc-ccitt.h"
 
 using namespace std;
 namespace io = boost::iostreams;
@@ -376,7 +376,18 @@ string I3Frame::Dump() const
 
 namespace 
 {
-  typedef boost::crc_optimal<16, 0x1021, 0xFFFF, 0, false, false> crc_t;
+  typedef struct crc_ {
+    uint16_t crc;
+
+    crc_() : crc(0xffff) {}
+    uint16_t checksum() { return crc; }
+    inline void process_bytes(const void *bytes, size_t size) {
+       crc = crc_ccitt(crc, (const uint8_t *)bytes, size);
+    }
+    inline void process_byte(uint8_t byte) {
+       crc = crc_ccitt_byte(crc, byte);
+    }
+  } crc_t;
 
   template <typename T, typename CRC>
   inline void
@@ -518,7 +529,7 @@ void I3Frame::save(OStreamT& os, const vector<string>& skip) const
 //  Toplevel load interface, dispatches to versioned versions
 //
 template <typename IStreamT>
-bool I3Frame::load(IStreamT& is, const vector<string>& skip)
+bool I3Frame::load(IStreamT& is, const vector<string>& skip, bool verify_cksum)
 {
   if (!is.good())
     log_fatal("attempt to read from stream in error state");
@@ -564,7 +575,7 @@ bool I3Frame::load(IStreamT& is, const vector<string>& skip)
     if (versionRead == 4)
       return load_v4(is, skip);
     if (versionRead == 5)
-      return load_v5(is, skip);
+      return load_v5(is, skip, verify_cksum);
     else
       log_fatal("Frame is version %u, this software can read only up to version 5", versionRead);
   }
@@ -576,7 +587,7 @@ bool I3Frame::load(IStreamT& is, const vector<string>& skip)
 //
 //
 template <typename IStreamT>
-bool I3Frame::load_v5(IStreamT& is, const vector<string>& skip)
+bool I3Frame::load_v5(IStreamT& is, const vector<string>& skip, bool verify)
 {
   if (!is.good())
     log_fatal("attempt to read from stream in error state");
@@ -592,21 +603,25 @@ bool I3Frame::load_v5(IStreamT& is, const vector<string>& skip)
     boost::archive::portable_binary_iarchive bia(is);
 
     bia >> make_nvp("stream", stop_);
-    crcit(stop_.id(), crc, calc_crc);
+    if (verify)
+      crcit(stop_.id(), crc, calc_crc);
 
     i3frame_nslots_t nslots;
     bia >> make_nvp("size", nslots);
-    crcit(nslots, crc, calc_crc);
+    if (verify)
+      crcit(nslots, crc, calc_crc);
 
     for (unsigned int i = 0; i < nslots; i++)
       {
         string key, type_name;
 
         bia >> make_nvp("key", key);
-	crcit(key, crc, calc_crc);
+        if (verify)
+	  crcit(key, crc, calc_crc);
 
         bia >> make_nvp("type_name", type_name);
-	crcit(type_name, crc, calc_crc);
+        if (verify)
+	  crcit(type_name, crc, calc_crc);
 
         bool skipIt = false;
         for (vector<string>::const_iterator skipIter = skip.begin();
@@ -636,13 +651,14 @@ bool I3Frame::load_v5(IStreamT& is, const vector<string>& skip)
 	    }
             if (blob.buf.size() == 0)
               log_fatal("read a zero-size buffer from input stream?");
-	    crcit(blob.buf, crc, calc_crc);
+            if (verify)
+	      crcit(blob.buf, crc, calc_crc);
             blob.type_name = type_name;
           }
       }
 
     bia >> make_nvp("checksum", checksumRead);
-    if (calc_crc && (crc.checksum() != checksumRead))
+    if (verify && calc_crc && (crc.checksum() != checksumRead))
       log_fatal("checksums don't match");
   }
 
@@ -902,12 +918,12 @@ I3FrameObjectConstPtr I3Frame::get_impl(map_t::const_reference pr,
 }
 
 
-template bool I3Frame::load(io::filtering_istream&, const vector<string>&);
-template bool I3Frame::load(istream& is, const vector<string>&);
-template bool I3Frame::load(ifstream& is, const vector<string>&);
-template bool I3Frame::load(boost::interprocess::bufferstream& is, const vector<string>&);
+template bool I3Frame::load(io::filtering_istream&, const vector<string>&, bool);
+template bool I3Frame::load(istream& is, const vector<string>&, bool);
+template bool I3Frame::load(ifstream& is, const vector<string>&, bool);
+template bool I3Frame::load(boost::interprocess::bufferstream& is, const vector<string>&, bool);
 template bool I3Frame::load(boost::interprocess::basic_vectorstream<std::vector<
-char> >& is, const vector<string>&);
+char> >& is, const vector<string>&, bool);
 
 template void I3Frame::save(io::filtering_ostream&, const vector<string>&) const;
 template void I3Frame::save(boost::interprocess::basic_vectorstream<std::vector<char> >&, const vector<string>&) const;

@@ -84,6 +84,7 @@ endif (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
 
 i3_add_library(icetray
   private/icetray/I3Frame.cxx 
+  private/icetray/crc-ccitt.c
   private/icetray/open.cxx
   private/icetray/load_project.cxx
   private/icetray/I3FrameObject.cxx      
