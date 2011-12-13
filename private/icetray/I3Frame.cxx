@@ -39,6 +39,8 @@
 #include <icetray/I3Frame.h>
 #include <icetray/I3Tray.h>
 
+#include <zlib.h>
+
 #include "crc-ccitt.h"
 
 using namespace std;
@@ -377,15 +379,22 @@ string I3Frame::Dump() const
 namespace 
 {
   typedef struct crc_ {
-    uint16_t crc;
+    uint32_t crc;
+    bool is_crc32;
 
-    crc_() : crc(0xffff) {}
-    uint16_t checksum() { return crc; }
+    crc_(bool crc32 = true) : crc(crc32 ? 0 : 0xffff), is_crc32(crc32) {}
+    uint32_t checksum() { return crc; }
     inline void process_bytes(const void *bytes, size_t size) {
-       crc = crc_ccitt(crc, (const uint8_t *)bytes, size);
+       if (is_crc32)
+         crc = crc32(crc, (const Bytef *)bytes, size);
+       else
+         crc = crc_ccitt(crc, (const uint8_t *)bytes, size);
     }
     inline void process_byte(uint8_t byte) {
-       crc = crc_ccitt_byte(crc, byte);
+       if (is_crc32)
+         crc = crc32(crc, &byte, 1);
+       else
+         crc = crc_ccitt_byte(crc, byte);
     }
   } crc_t;
 
@@ -433,7 +442,7 @@ typedef uint32_t i3frame_nslots_t;
 typedef char i3frame_tag_t[4];
 const static i3frame_tag_t tag = { '[', 'i', '3', ']' };
 
-const static i3frame_version_t version = 5;
+const static i3frame_version_t version = 6;
 
 template <typename OStreamT>
 void I3Frame::save(OStreamT& os, const vector<string>& skip) const
@@ -574,27 +583,28 @@ bool I3Frame::load(IStreamT& is, const vector<string>& skip, bool verify_cksum)
 
     if (versionRead == 4)
       return load_v4(is, skip);
-    if (versionRead == 5)
-      return load_v5(is, skip, verify_cksum);
+    if (versionRead == 5 || versionRead == 6)
+      return load_v56(is, skip, versionRead == 6, verify_cksum);
     else
-      log_fatal("Frame is version %u, this software can read only up to version 5", versionRead);
+      log_fatal("Frame is version %u, this software can read only up to version %d", versionRead, version);
   }
 }
 
 //
 //
-//  load version 5 (latest)
+//  load versions 5 and 6 (latest)
+//  these differ in using CRC16-CCITT vs. CRC32
 //
 //
 template <typename IStreamT>
-bool I3Frame::load_v5(IStreamT& is, const vector<string>& skip, bool verify)
+bool I3Frame::load_v56(IStreamT& is, const vector<string>& skip, bool v6, bool verify)
 {
   if (!is.good())
     log_fatal("attempt to read from stream in error state");
 
   i3frame_checksum_t checksumRead;
 
-  crc_t crc;
+  crc_t crc(v6);
   bool calc_crc = (skip.size() == 0);
 
   // read size of the entire (serialized) frame
