@@ -382,13 +382,18 @@ local unsigned long crc32c_sse42(crc, buf, len)
     unsigned len;
 {
     /* From: http://byteworm.com/2010/10/13/crc32 */
-    uint32_t q = len/sizeof(uint32_t);
-    uint32_t r = len % sizeof(uint32_t);
-    uint32_t *p = (uint32_t*)buf;
+    uint32_t q = len/sizeof(long);
+    uint32_t r = len % sizeof(long);
+    long *p = (long *)buf;
 
     while (q--) {
+#ifdef __x86_64__
+        __asm__ __volatile__(".byte 0xf2,0x48,0xf,0x38,0xf1,0xf1;" : "=S"(crc)
+            : "0"(crc), "c"(*p));
+#else
         __asm__ __volatile__(".byte 0xf2, 0xf, 0x38, 0xf1, 0xf1;" : "=S"(crc)
             : "0"(crc), "c"(*p));
+#endif
         p++;
     }
 
@@ -413,7 +418,7 @@ unsigned long crc32c(crc, buf, len)
 	unsigned int a,b,c,d;
         __asm__ __volatile__("cpuid" : "=a"(a), "=b"(b), "=c"(c), "=d"(d) :
             "0"(1));
-        has_sse42 = (c & 0x00100000);
+        has_sse42 = ((c & 0x00100000) != 0);
     }
 
     if (has_sse42)
