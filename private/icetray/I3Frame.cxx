@@ -39,8 +39,6 @@
 #include <icetray/I3Frame.h>
 #include <icetray/I3Tray.h>
 
-#include <zlib.h>
-
 #include "crc-ccitt.h"
 
 using namespace std;
@@ -376,6 +374,8 @@ string I3Frame::Dump() const
   return o.str();
 }
 
+extern "C" unsigned long crc32c(unsigned long crc, const uint8_t *buf, unsigned int len);
+
 namespace 
 {
   typedef struct crc_ {
@@ -386,13 +386,13 @@ namespace
     uint32_t checksum() { return crc; }
     inline void process_bytes(const void *bytes, size_t size) {
        if (is_crc32)
-         crc = crc32(crc, (const Bytef *)bytes, size);
+         crc = crc32c(crc, (const uint8_t *)bytes, size);
        else
          crc = crc_ccitt(crc, (const uint8_t *)bytes, size);
     }
     inline void process_byte(uint8_t byte) {
        if (is_crc32)
-         crc = crc32(crc, &byte, 1);
+         crc = crc32c(crc, &byte, 1);
        else
          crc = crc_ccitt_byte(crc, byte);
     }
