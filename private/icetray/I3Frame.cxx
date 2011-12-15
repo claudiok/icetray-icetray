@@ -275,7 +275,7 @@ void I3Frame::Put(const string& name, I3FrameObjectConstPtr element, const I3Fra
 
 void I3Frame::Rename(const string& fromname, const string& toname)
 {
-  map_t::const_iterator fromiter = map_.find(fromname);
+  map_t::iterator fromiter = map_.find(fromname);
   if (fromiter == map_.end())
     log_fatal("attempt to rename \"%s\" to \"%s\", but the source is empty",
               fromname.c_str(), toname.c_str());
@@ -286,7 +286,7 @@ void I3Frame::Rename(const string& fromname, const string& toname)
               fromname.c_str(), toname.c_str());
 
   map_[toname] = map_[fromname];
-  map_.erase(fromname);
+  map_.erase(fromiter);
 
 }
 
