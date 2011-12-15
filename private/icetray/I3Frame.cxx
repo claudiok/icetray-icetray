@@ -177,26 +177,28 @@ I3Frame::assign(const I3Frame& rhs)
 
 void I3Frame::purge(const Stream& what)
 {
-  std::vector<std::string> keys;
-  for (map_t::const_iterator it = map_.begin();
-       it != map_.end();
-       it++)
-    if (it->second->stream == what)
-      keys.push_back(it->first);
-  for (unsigned i=0; i< keys.size(); i++)
-    Delete(keys[i]);
+  map_t::iterator it = map_.begin();
+  while (it != map_.end())
+    if (it->second->stream == what) {
+      map_t::iterator doomed = it;
+      it++;
+      map_.erase(doomed);
+    } else {
+      it++;
+    }
 }
 
 void I3Frame::purge()
 {
-  std::vector<std::string> keys;
-  for (map_t::const_iterator it = map_.begin();
-       it != map_.end();
-       it++)
-    if (it->second->stream != stop_)
-      keys.push_back(it->first);
-  for (unsigned i=0; i< keys.size(); i++)
-    Delete(keys[i]);
+  map_t::iterator it = map_.begin();
+  while (it != map_.end())
+    if (it->second->stream != stop_) {
+      map_t::iterator doomed = it;
+      it++;
+      map_.erase(doomed);
+    } else {
+      it++;
+    }
 }
 
 bool I3Frame::Has(const std::string& key, const Stream& stream) const
@@ -214,13 +216,7 @@ bool I3Frame::Has(const std::string& key, const Stream& stream) const
 
 void I3Frame::merge(const I3Frame& rhs)
 {
-  for(map_t::const_iterator it = rhs.map_.begin();
-      it != rhs.map_.end();
-      it++)
-    {
-      if (map_.find(it->first) == map_.end())
-	map_[it->first] = it->second;
-    }
+  map_.insert(rhs.map_.begin(), rhs.map_.end());
 }
 
 
@@ -620,6 +616,7 @@ bool I3Frame::load_v56(IStreamT& is, const vector<string>& skip, bool v6, bool v
     bia >> make_nvp("size", nslots);
     if (verify)
       crcit(nslots, crc, calc_crc);
+    map_.resize(nslots);
 
     for (unsigned int i = 0; i < nslots; i++)
       {
