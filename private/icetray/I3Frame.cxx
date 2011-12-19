@@ -178,27 +178,23 @@ I3Frame::assign(const I3Frame& rhs)
 void I3Frame::purge(const Stream& what)
 {
   map_t::iterator it = map_.begin();
-  while (it != map_.end())
-    if (it->second->stream == what) {
-      map_t::iterator doomed = it;
+  while (it != map_.end()) {
+    if (it->second->stream == what)
+      map_.erase(it++);
+    else
       it++;
-      map_.erase(doomed);
-    } else {
-      it++;
-    }
+  }
 }
 
 void I3Frame::purge()
 {
   map_t::iterator it = map_.begin();
-  while (it != map_.end())
-    if (it->second->stream != stop_) {
-      map_t::iterator doomed = it;
+  while (it != map_.end()) {
+    if (it->second->stream != stop_)
+      map_.erase(it++);
+    else
       it++;
-      map_.erase(doomed);
-    } else {
-      it++;
-    }
+  }
 }
 
 bool I3Frame::Has(const std::string& key, const Stream& stream) const
