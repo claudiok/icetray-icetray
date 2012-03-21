@@ -200,7 +200,6 @@ i3_test_executable(test
   private/test/test-throws-not-caught.cxx
   private/test/PhysicsBuffering.cxx         
   private/test/typesizes.cxx
-  private/test/OMKey.cxx
   private/test/I3ConditionalModuleTest.cxx
   private/test/NoOutboxModule.cxx
   private/test/iostreams.cxx
