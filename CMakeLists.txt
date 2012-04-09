@@ -89,6 +89,8 @@ endif (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
 
 i3_add_library(icetray
   private/icetray/I3Frame.cxx 
+  private/icetray/crc-ccitt.c
+  private/icetray/crc32.c
   private/icetray/open.cxx
   private/icetray/load_project.cxx
   private/icetray/I3FrameObject.cxx      
@@ -199,14 +201,13 @@ i3_test_executable(test
   private/test/test-throws-not-caught.cxx
   private/test/PhysicsBuffering.cxx         
   private/test/typesizes.cxx
-  private/test/OMKey.cxx
   private/test/I3ConditionalModuleTest.cxx
   private/test/NoOutboxModule.cxx
   private/test/iostreams.cxx
  
   USE_PROJECTS icetray)
 
-#i3_test_compile(main private/test/main.cxx)
+i3_test_compile(main private/test/main.cxx)
 
 i3_test_scripts(resources/test/*.py)
 
@@ -223,7 +224,7 @@ no_dotfile_glob(ALL_HEADERS public/icetray/*.h)
 foreach(HEADER ${ALL_HEADERS})
   get_filename_component(basename ${HEADER} NAME_WE)
   file(RELATIVE_PATH REL_HEADER ${CMAKE_CURRENT_SOURCE_DIR} ${HEADER})
-  #i3_test_compile(${basename} ${REL_HEADER})
+  i3_test_compile(${basename} ${REL_HEADER})
 endforeach(HEADER ${ALL_HEADERS})
 
 #

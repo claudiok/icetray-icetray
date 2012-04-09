@@ -1,7 +1,7 @@
 /**
  *  $Id$
  *  
- *  Copyright (C) 2007
+ *  Copyright (C) 2008
  *  Troy D. Straszheim  <troy@icecube.umd.edu>
  *  and the IceCube Collaboration <http://www.icecube.wisc.edu>
  *  
@@ -20,33 +20,17 @@
  *  
  */
 
-#include <I3Test.h>
-#include <boost/preprocessor/stringize.hpp>
-#include "icetray/I3Tray.h"
-#include "icetray/I3ServiceFactory.h"
-#include <icetray/I3Frame.h>
-#include <icetray/OMKey.h>
-#include <boost/assign/std/vector.hpp>
+#include <math.h>
+#include <boost/python.hpp>
 
-using namespace boost::assign;
+using namespace boost::python;
 
-TEST_GROUP(OMKey);
+bool isnan_d(double x){ return isnan(x); }
+bool isnan_f(float x){ return isnan(x); }
 
-TEST(hash)
+BOOST_PYTHON_MODULE(i3math)
 {
-#ifdef I3_USE_FAST_OMKEY_MAP
-  vector<int> hashes((80+19) * 64);
-  for (int string = -19; string < 80; string++)
-    for (int omnum = 0; omnum < 64; omnum++)
-      hashes[OMKey::hash()(OMKey(string, omnum))]++;
-
-  for (int i = 0; i< hashes.size(); i++)
-    {
-      std::cout << hashes[i] << " ";
-      if (hashes[i] > 1)
-	log_fatal("collision at %d", i);
-    }
-#endif
+  def("isnan", isnan_d);
+  def("isnan", isnan_f);
 }
-
 
