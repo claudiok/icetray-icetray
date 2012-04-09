@@ -211,8 +211,8 @@ i3_test_executable(test
 
 i3_test_scripts(resources/test/*.py)
 
-add_subdirectory(private/compile-fail)
-add_subdirectory(private/compile)
+#add_subdirectory(private/compile-fail)
+#add_subdirectory(private/compile)
 
 #add_subdirectory(private/test-lib)
 
