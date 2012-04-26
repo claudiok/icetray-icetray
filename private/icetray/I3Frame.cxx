@@ -570,6 +570,7 @@ bool I3Frame::load(IStreamT& is, const vector<string>& skip)
     else
       log_fatal("Frame is version %u, this software can read only up to version 5", versionRead);
   }
+  return false;
 }
 
 //
