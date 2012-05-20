@@ -10,29 +10,32 @@ I3Units = icetray.I3Units
 NaN = float('NaN')
 Inf = float('inf')
 
-def load(filename):
+import platform, sys
+def load(libname):
     """
     load the library (via dlopen) into the running tray.  This is
     primarily used for libraries that don't have python bindings
     (eventually all libraries should have at least stub python
     bindings, making them loadable via the standard python *import*,
     and this sould be obsolete.
-
-    :param filename:
-      should be the name of the file to load
-      including the leading ``lib``, but *not* including the trailing
-      ``.so`` or ``.dylib``, eg::
-
-        load("libdataio")
-        load("libexamples")
-      
-    """
-    try:
-        icetray.load(filename)
-    except:
-        print """\n***\n*** Failed to load library. (%s)\n*** %s\n***\n""" % (sys.exc_info()[0], sys.exc_info()[1])
-        sys.exit(1)
     
+    :param filename:
+    should be the name of the file to load
+    including the leading ``lib``, but *not* including the trailing
+    ``.so`` or ``.dylib``, eg::
+    
+    load("libdataio")
+    load("libexamples")
+    
+    """
+    try :
+        icetray.load(libname)
+    except:
+        print """\n***\n*** Failed to load library. (%s)\n*** %s\n***\n""" % \
+              (sys.exc_info()[0], sys.exc_info()[1])
+        sys.exit(1)
+
+            
 def OMKey(string,omnum):
     return icetray.OMKey(string,omnum)
 
