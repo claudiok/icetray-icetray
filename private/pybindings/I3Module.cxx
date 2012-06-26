@@ -34,6 +34,7 @@ namespace {
       .def("PopFrame", &module_t::PopFrame) \
       .def("Process", &module_t::Process) \
       .def("RequestSuspension",&module_t::RequestSuspension) \
+      .add_property("name", &module_t::GetName) \
       .add_property("context", make_function(&module_t::GetContext, return_internal_reference<>())) \
 
 
@@ -88,7 +89,7 @@ namespace {
              &module_t::SetPacketTypes);
 
     implicitly_convertible<boost::shared_ptr<module_t>, boost::shared_ptr<I3Module> >();
-  }
+  } 
 }
 
 //void fleh(boost::python::object obj)
