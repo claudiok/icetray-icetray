@@ -70,7 +70,7 @@ class I3ServiceBase {
         virtual void Configure() = 0;
 
         /// name (for log messages)
-        virtual const std::string& GetName() const {
+        const std::string GetName() const {
             return name_;
         }
 
