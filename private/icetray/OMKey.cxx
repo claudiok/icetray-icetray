@@ -25,12 +25,22 @@
 OMKey::~OMKey() { }
 
 template <typename Archive>
-void 
-OMKey::serialize (Archive & ar, unsigned)
+void
+OMKey::serialize (Archive & ar, unsigned version)
 {
+  if (version>1)
+    log_fatal("Attempting to read version %u from file but running version %u of OMKey class.",version,1);
+ 
   ar & make_nvp("I3FrameObject", base_object< I3FrameObject >(*this));
   ar & make_nvp("StringNumber",  stringNumber_);
   ar & make_nvp("OMNumber",  omNumber_);
+ 
+  unsigned char pmtNumber_ = 0;
+  if (version>=1) {
+    ar & make_nvp("PMTNumber",  pmtNumber_);
+  } else {
+    pmtNumber_=0;
+  }
 }
 
 I3_SERIALIZABLE(OMKey);
