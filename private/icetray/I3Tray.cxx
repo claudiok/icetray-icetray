@@ -137,6 +137,10 @@ I3Tray::AddModule(bp::object obj, const std::string& instancename)
 	if (configure_called)
 		log_fatal("I3Tray::Configure() already called -- "
 		    "cannot add new modules");
+	if (modules.find(instancename) != modules.end())
+		log_fatal("Tray already contains module named \"%s\" of "
+		    "type %s", instancename.c_str(),
+		    modules[instancename]->configuration_.ClassName().c_str());
 
 	I3ModulePtr module;
 	if (PyString_Check(obj.ptr())) {
@@ -197,6 +201,14 @@ I3Tray::AddModule(bp::object obj, const std::string& instancename)
 I3Tray::param_setter
 I3Tray::AddModule(I3ModulePtr module, const std::string& instancename)
 {
+	if (configure_called)
+		log_fatal("I3Tray::Configure() already called -- "
+		    "cannot add new modules");
+	if (modules.find(instancename) != modules.end())
+		log_fatal("Tray already contains module named \"%s\" of "
+		    "type %s", instancename.c_str(),
+		    modules[instancename]->configuration_.ClassName().c_str());
+
 	log_trace("%s : %s", __PRETTY_FUNCTION__, instancename.c_str());
 
 	module->configuration_.ClassName(I3::name_of(typeid(*module)));
@@ -303,22 +315,40 @@ I3Tray::Configure()
 {
 	if (configure_called)
 		return;
-	configure_called = true;
-
 	if (modules_in_order.size() == 0)
 		log_fatal("Calling %s with no modules added. "
 		    "You probably want some.", __PRETTY_FUNCTION__);
+
+	if (!boxes_connected &&
+	    modules[modules_in_order.back()]->outboxes_.size() != 0) {
+		log_info("Last module (\"%s\") has a dangling outbox. Adding "
+		    "TrashCan to end of tray", modules_in_order.back().c_str());
+		AddModule("TrashCan", "__automatic_I3Tray_trashcan");
+	}
+
+	configure_called = true;
 
 	//
 	// Create the services in the order they were added.
 	// 
 	BOOST_FOREACH(const string& objectname, factories_in_order) {
 		I3ServiceFactoryPtr factory = factories[objectname];
-		factory->Configure();
+		try {
+			factory->Configure();
+		} catch (...) {
+			PyObject *type, *value, *traceback;
+			PyErr_Fetch(&type, &value, &traceback);
+			log_error("Exception thrown while configuring "
+			    "service factory \"%s\".", objectname.c_str());
+			std::cerr << factory->configuration_;
+			PyErr_Restore(type, value, traceback);
+			throw;
+		}
 		if (!factory->configuration_.is_ok()) {
 			std::cerr << factory->configuration_;
-			log_fatal("Configuration error.  Turn up your logging "
-			    "to see just what.");
+			log_fatal("Error in configuration for service factory "
+			    "\"%s\".  Turn up your logging to see just what.",
+			    objectname.c_str());
 		}
 		factory->InitializeService(master_context);
 	}
@@ -330,11 +360,22 @@ I3Tray::Configure()
 	//
 	BOOST_FOREACH(const string& objectname, modules_in_order) {
 		I3ModulePtr module = modules[objectname];
-		module->Configure_();
+		try {
+			module->Configure_();
+		} catch (...) {
+			PyObject *type, *value, *traceback;
+			PyErr_Fetch(&type, &value, &traceback);
+			log_error("Exception thrown while configuring "
+			    "module \"%s\".", objectname.c_str());
+			std::cerr << module->configuration_;
+			PyErr_Restore(type, value, traceback);
+			throw;
+		}
 		if (!module->configuration_.is_ok()) {
 			std::cerr << module->configuration_;
-			log_fatal("Configuration error.  Turn up your logging "
-			    "to see just what.");
+			log_fatal("Error in configuration for module "
+			    "\"%s\".  Turn up your logging to see just what.",
+			    objectname.c_str());
 		}
 	}
 
@@ -520,7 +561,6 @@ I3Tray::SetParameter(const string& module, const string& parameter,
     bp::object value)
 {
 	log_trace("%s", __PRETTY_FUNCTION__);
-	shared_ptr<I3Context> context;
 
 	I3Configuration *config;
 	if (modules.find(module) != modules.end())
