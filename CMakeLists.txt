@@ -174,7 +174,6 @@ i3_test_executable(test
   private/test/ConfigureServiceTest.cxx  
   private/test/I3LoggingTest.cxx                    
   private/test/SourceOrderTest.cxx
-  private/test/ContextSwitching.cxx      
   private/test/I3LoggingTest2.cxx                   
   private/test/TestModule.cxx
   private/test/DefaultFrameNameTest.cxx  
@@ -186,6 +185,7 @@ i3_test_executable(test
   private/test/FailingModuleTest.cxx     
   private/test/I3TrayTest.cxx               
   private/test/Utility.cxx
+  private/test/LexicalCasts.cxx
   private/test/FrameAccess.cxx         
   private/test/VectorParameters.cxx
   private/test/FrameFlow.cxx           

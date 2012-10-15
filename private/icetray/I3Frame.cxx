@@ -288,12 +288,15 @@ void I3Frame::Rename(const string& fromname, const string& toname)
 
 void I3Frame::ChangeStream(const string& key, I3Frame::Stream stream)
 {
-  map_t::const_iterator fromiter = map_.find(key);
+  map_t::iterator fromiter = map_.find(key);
   if (fromiter == map_.end())
     log_fatal("attempt to change stream of \"%s\", but it doesn't exist",
       key.c_str());
 
-  fromiter->second->stream = stream;
+  // Duplicate value_t to avoid potential caching issues
+  boost::shared_ptr<value_t> sptr(new value_t(*fromiter->second));
+  sptr->stream = stream;
+  fromiter->second = sptr;
 }
 
 void I3Frame::Delete(const string& name)
@@ -575,11 +578,13 @@ bool I3Frame::load(IStreamT& is, const vector<string>& skip, bool verify_cksum)
 
     if (versionRead == 4)
       return load_v4(is, skip);
-    if (versionRead == 5 || versionRead == 6)
+    else if (versionRead == 5 || versionRead == 6)
       return load_v56(is, skip, versionRead == 6, verify_cksum);
     else
       log_fatal("Frame is version %u, this software can read only up to version %d", versionRead, version);
   }
+
+  return false;
 }
 
 //

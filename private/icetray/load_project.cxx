@@ -46,8 +46,8 @@ load_project (std::string path, bool verbose)
       // this has to be an error to keep people from committing stuff
       // that isn't mac/linux portable
       std::cout << "*** Failure loading '" << path << "'.\n"
-		<< "*** Load external libraries without prefix and extension.\n"
-		<< "*** e.g. please omit 'lib' and '.dylib' or '.so'.\n";
+		<< "*** Load external libraries without an extension.\n"
+		<< "*** e.g. please omit '.dylib' or '.so'.\n";
       exit(1);
     }
   else
@@ -61,23 +61,25 @@ load_project (std::string path, bool verbose)
 
   // first try via LD_LIBRARY_PATH search
   void *v = dlopen(path.c_str(), RTLD_NOW | RTLD_GLOBAL);
+  char *errmsg = dlerror();
 
   // not found, then try $I3_BUILD/lib specifically
-  if (!v)
+  if (v == NULL || errmsg != NULL)
     {
       std::string fullpath(getenv("I3_BUILD"));
       fullpath += "/lib/";
       fullpath += path;
       v = dlopen(fullpath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+      errmsg = dlerror();
     }
-  if (v) 
+  if (v != NULL && errmsg == NULL) 
     {
       if (verbose) 
 	std::cout << "ok" << std::endl;
       return 0;
     }
   std::string errormsg("dlopen() dynamic loading error: ");
-  errormsg += dlerror();
+  errormsg += (errmsg == NULL) ? "unknown error" : errmsg;
 
   throw std::runtime_error(errormsg);
 }

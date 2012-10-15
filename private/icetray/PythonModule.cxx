@@ -54,6 +54,13 @@ PythonModule<I3PacketModule>::PythonModule(const I3Context& ctx,
 
 template <typename Base>
 void 
+PythonModule<Base>::PyConfigure()
+{
+  Base::Configure();
+}
+
+template <typename Base>
+void 
 PythonModule<Base>::Configure()
 {
   i3_log("%s", __PRETTY_FUNCTION__);
@@ -61,6 +68,13 @@ PythonModule<Base>::Configure()
     conf();
   else
     log_fatal("Python module doesn't implement 'Configure'");
+}
+
+template <typename Base>
+void 
+PythonModule<Base>::PyProcess()
+{
+  Base::Process();
 }
 
 template <typename Base>
@@ -78,6 +92,13 @@ PythonModule<Base>::Process()
       log_trace("%s", "calling base Process");
       Base::Process();
     }
+}
+
+template <typename Base>
+void 
+PythonModule<Base>::PyFinish()
+{
+  Base::Finish();
 }
 
 template <typename Base>
@@ -303,33 +324,3 @@ void PythonModule<I3PacketModule>::SetPacketTypes(
 template class PythonModule<I3Module>;
 template class PythonModule<I3ConditionalModule>;
 template class PythonModule<I3PacketModule>;
-
-
-
-//
-//  Custom module creator policy for python modules.  Python class
-//  is put in the context by the I3Tray at location 'class'
-//
-template <class FactoryProductType, class ModuleType>
-struct PythonCreate
-{
-  static 
-  shared_ptr<FactoryProductType> 
-  Create (const I3Context& c)
-  {
-    //    try {
-      bp::object cls = c.Get<bp::object>("class");
-      log_trace("about to cls(c)");
-      // use 'ptr' to avoid pass-by-value of context
-      bp::object instance = cls(bp::ptr(&c));
-      return bp::extract<boost::shared_ptr<FactoryProductType> >(instance);
-      //    } catch (...) {
-      //      log_fatal("Internal error. Unable to get a boost::python::object named 'class' out of the context.");}
-  }
-};
-
-namespace {
-  typedef void PythonModule;
-  I3_REGISTER(I3Module, PythonModule, PythonCreate);
-}
-//I3_REGISTER(I3Module, PythonModule<I3ConditionalModule>, PythonCreate);
