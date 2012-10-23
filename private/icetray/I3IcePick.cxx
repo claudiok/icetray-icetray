@@ -38,23 +38,27 @@
 #include <icetray/I3Bool.h>
 
 I3IcePick::I3IcePick(const I3Context& context) :
-  context_(context),
-  cache_(false)
+  I3ServiceBase(context), cache_(false)
 {
   AddParameter("CacheResults",
 	       "For each frame evaluated, write the result to the frame, and "
 	       "check to see if that result exists before evaluating again.",
 	       cache_);
-  log_warn("\n**\n"
-           "**    The IcePick system is DEPRECATED and will be removed in the next\n"
-           "**    offline-software release. All of the functionality of IcePick can\n"
-           "**    be replaced with Python functions, and drop-in replacements for many\n"
-           "**    of the former IcePicks are provided in icecube.icepick module.\n"
-           "**    If you believe that there is no suitable replacement for your favorite\n"
-           "**    IcePick, please email dataclass@icecube.wisc.edu or the appropriate\n"
-           "**    meta-project mailing list.  You can also file a bug report at\n"
-           "**    http://code.icecube.wisc.edu.\n"
-           "**\n");
+//
+//  Too early for harsh warnings.  Would be nice to see an orderly exit from C++ Icepicks where 
+//	practical, it's likely needed in some places for a bit longer.  Also need full implementation
+//	of pypicks from c++ versions.
+//
+//  log_warn("\n**\n"
+//           "**    The IcePick system is DEPRECATED and will be removed in the next\n"
+//           "**    offline-software release. All of the functionality of IcePick can\n"
+//           "**    be replaced with Python functions, and drop-in replacements for many\n"
+//           "**    of the former IcePicks are provided in icecube.icepick module.\n"
+//           "**    If you believe that there is no suitable replacement for your favorite\n"
+//           "**    IcePick, please email dataclass@icecube.wisc.edu or the appropriate\n"
+//           "**    meta-project mailing list.  You can also file a bug report at\n"
+//           "**    http://code.icecube.wisc.edu.\n"
+//           "**\n");
 
 }
 
@@ -107,14 +111,3 @@ I3IcePick::SelectFrameInterface(I3Frame& frame)
     }
 }
 
-I3Configuration& 
-I3IcePick::GetConfiguration()
-{
-    return context_.Get<I3Configuration>();
-}
-
-const I3Configuration& 
-I3IcePick::GetConfiguration() const
-{
-    return context_.Get<I3Configuration>();
-}

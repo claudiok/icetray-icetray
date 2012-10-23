@@ -19,44 +19,57 @@
 //   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <string>
 #include <icetray/I3Context.h>
-#include <icetray/I3Frame.h>
-#include <icetray/I3Configuration.h>
+#include <boost/make_shared.hpp>
 
 using namespace boost::python;
 
-bool 
-context_putconfig(I3ContextPtr ctx, 
-		  const std::string& where, I3ConfigurationPtr what)
+static
+int context_len(I3ContextPtr context)
 {
-  return ctx->Put(where, what);
+  return context->keys().size();
 }
 
-I3ConfigurationPtr
-context_getconfig(I3ContextPtr ctx)
+static
+list context_items(I3ContextPtr context)
 {
-	return ctx->Get<I3ConfigurationPtr>();
+  std::vector<std::string> keys = context->keys();
+
+  list t;
+  BOOST_FOREACH(const std::string &key, keys) {
+      boost::python::object obj = context->Get(key);
+      t.append(boost::python::make_tuple(key, obj));
+  }
+  return t;
 }
 
-typedef std::map<std::string, std::pair<FrameFifoPtr, I3ModulePtr> > connections_t;
-
-bool 
-context_putoutboxes(I3ContextPtr ctx, 
-		    const std::string& where, boost::shared_ptr<connections_t> what)
+static
+list context_values(I3ContextPtr context)
 {
-  return ctx->Put(where, what);
+  std::vector<std::string> keys = context->keys();
+
+  list t;
+  BOOST_FOREACH(const std::string &key, keys) {
+      boost::python::object obj = context->Get(key);
+      t.append(obj);
+  }
+  return t;
 }
 
 void register_I3Context()
 {
-  class_<I3Context, I3ContextPtr, boost::noncopyable >("I3Context")
-    .def(init<>())
-    .def("__setitem__", &context_putconfig)
-    .def("__setitem__", &context_putoutboxes)
-    .add_property("configuration", &context_getconfig)
+  class_<std::map<std::string, object> >("map_string_pyobject")
+    .def(map_indexing_suite<std::map<std::string, object>, true>())
     ;
 
-  class_<connections_t, boost::shared_ptr<connections_t> >("Connections")
+  class_<I3Context, I3ContextPtr, boost::noncopyable> ("I3Context")
+    .def("keys", &I3Context::keys)
+    .def("values", &context_values)
+    .def("items", &context_items)
+    .def("__len__", &context_len)
+    .def("__contains__", (bool (I3Context::*)(const std::string &) const)&I3Context::Has)
+    .def("__getitem__", (object (I3Context::*)(const std::string &) const)&I3Context::Get)
+    .def("__setitem__", (bool (I3Context::*)(const std::string &, object))&I3Context::Put)
+    .def("__iter__", range(&I3Context::begin, &I3Context::end))
     ;
 }

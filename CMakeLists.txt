@@ -168,14 +168,14 @@ set_source_files_properties(${ICETRAY_PYTHON_SRC}
   PROPERTIES
   COMPILE_FLAGS -DI3_PYBINDINGS_MODULE)
 
-i3_test_executable(test 
+i3_test_executable(test
+  private/test/I3Bool.cxx
   private/test/CleanConstructorTest.cxx  
   private/test/I3LoggingObjectFirst.cxx     
   private/test/ServicesAtDestruction.cxx
   private/test/ConfigureServiceTest.cxx  
   private/test/I3LoggingTest.cxx                    
   private/test/SourceOrderTest.cxx
-  private/test/ContextSwitching.cxx      
   private/test/I3LoggingTest2.cxx                   
   private/test/TestModule.cxx
   private/test/DefaultFrameNameTest.cxx  
@@ -187,6 +187,7 @@ i3_test_executable(test
   private/test/FailingModuleTest.cxx     
   private/test/I3TrayTest.cxx               
   private/test/Utility.cxx
+  private/test/LexicalCasts.cxx
   private/test/FrameAccess.cxx         
   private/test/VectorParameters.cxx
   private/test/FrameFlow.cxx           
