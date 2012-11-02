@@ -20,6 +20,11 @@
 
    .. automethod:: AddService
 
+   .. automethod:: AddSegment
+      .. seealso:: 
+
+      :ref:`tray_segments`
+
    .. automethod:: ConnectBoxes
 
    .. automethod:: Execute
@@ -29,9 +34,4 @@
    .. automethod:: SetParameter
 
    .. automethod:: Usage
-
-Reordering modules within Segments
-""""""""""""""""""""""""""""""""""
-
-TODO: How to reorder your modules.
 

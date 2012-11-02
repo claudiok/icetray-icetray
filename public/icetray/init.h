@@ -1,9 +1,8 @@
 /**
  *  $Id$
  *  
- *  Copyright (C) 2007
- *  Troy D. Straszheim  <troy@icecube.umd.edu>
- *  and the IceCube Collaboration <http://www.icecube.wisc.edu>
+ *  Copyright (C) 2012
+ *  the IceCube Collaboration <http://www.icecube.wisc.edu>
  *  
  *  This file is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,23 +18,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>
  *  
  */
+#ifndef ICETRAY_INIT_H_INCLUDED
+#define ICETRAY_INIT_H_INCLUDED
 
-#include <icetray/I3Module.h>
-#include <icetray/I3Logging.h>
+namespace I3{
+    /**
+     * Initialize the icetray library.  This function will initialize
+     * Python, if not already done, and load the icetray module into it;
+     * this ensures that icetray code that interacts with python data
+     * structures will work correctly.
+     *
+     * This function should be called near the beginning of any C++
+     * program that uses libicetray.  Python scripts don't need to
+     * worry about this.
+     * */
+    void init_icetray_lib();
+}
 
-struct TrashCan : public I3Module
-{
-  TrashCan(const I3Context& context) : I3Module(context) { }
-
-  void Process() 
-  { 
-    log_trace("%s", __PRETTY_FUNCTION__);
-    if (!PopFrame())
-      log_fatal("TrashCan is not a driving module");
-  }
-  
-  SET_LOGGER("TrashCan");
-};
-
-I3_MODULE(TrashCan);
-
+#endif /* ICETRAY_INIT_H_INCLUDED */

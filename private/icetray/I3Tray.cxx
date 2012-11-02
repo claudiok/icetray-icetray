@@ -112,10 +112,7 @@ I3Tray::I3Tray() :
 
 I3Tray::~I3Tray()
 {
-	// this Finish() is introducing too many bugs.  Bad.  
-	// interferes with checking for 'execute called', etc.
-	// uncomment and run the test suite to see.
-	// Finish();
+	Finish();
 
 	suspension_requested_ = false;
 }
@@ -292,8 +289,8 @@ I3Tray::ConnectBoxes(const std::string& fromModule,
 	log_debug("connecting outbox \"%s\" on module \"%s\" to module \"%s\"", 
 	    fromOutBox.c_str(), fromModule.c_str(), toModule.c_str());
 
-	// XXX: some modules only AddOutBox() at configure time
-	// accomodate this by adding it for them
+	// Some modules only AddOutBox() at configure time. Accomodate this
+	// by adding it for them
 	if (module->outboxes_.find(fromOutBox) == module->outboxes_.end()) {
 		module->AddOutBox(fromOutBox);
 		log_warn("module \"%s\" doesn't have an out box named \"%s\"",
@@ -401,7 +398,6 @@ I3Tray::Configure()
 	}
 
 	// Find the module without an inbox and set to be the "driving" module.
-	// XXX: Isn't this always just the first module?
 	driving_module.reset();
 	BOOST_FOREACH(const std::string &modname, modules_in_order) {
 		I3ModulePtr module = modules[modname];
@@ -507,19 +503,16 @@ void
 I3Tray::Finish()
 {
 	if (finish_called || !execute_called) {
-		const string e = "Finish() already called, or before calling "
-		    "Execute()";
-		log_trace("%s", e.c_str());
-		throw runtime_error(e.c_str());
+		log_warn("Finish() already called, or before calling "
+                    "Execute()");
 		return;
 	}
+	if (modules_in_order.size() == 0 || !driving_module)
+		return;
 	finish_called = true;
 
 	std::cout << "I3Tray finishing...\n";
 
-	if (!driving_module)
-		log_fatal("Attempt to call finish, but there is no driving "
-		    "module.  Did you forget to call Execute()?");
 	driving_module->Do(&I3Module::Finish);
   
 	BOOST_FOREACH(const std::string& factname, factories_in_order) {
