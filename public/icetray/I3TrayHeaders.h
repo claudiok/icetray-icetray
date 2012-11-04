@@ -1,5 +1,5 @@
 /**
- *  $Id: I3TrayHeaders.h 36004 2007-08-26 21:59:27Z troy $
+ *  $Id$
  *  
  *  Copyright (C) 2007
  *  Troy D. Straszheim  <troy@icecube.umd.edu>
