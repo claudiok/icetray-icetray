@@ -21,19 +21,82 @@
 #ifndef ICETRAY_I3LOGGING_H_INCLUDED
 #define ICETRAY_I3LOGGING_H_INCLUDED
 
+
+typdef enum {
+	LOG_TRACE,
+	LOG_DEBUG,
+	LOG_INFO,
+	LOG_WARN,
+	LOG_FATAL
+} I3LogLevel;
+
 #if defined(__cplusplus)
-#  if defined(I3_PRINTF_LOGGING)
-#    include <icetray/detail/PrintfLogging.h>
-#  elif defined(__CINT__)
-#    include <icetray/detail/CintLogging.h>
-#  elif defined(I3_PYTHON_LOGGING)
-#    include <icetray/detail/PythonLogging.h>
-#  else 
-#    include <icetray/detail/Log4cplusLogging.h>
-#    define I3_LOG4CPLUS_LOGGING
-#  endif
+
+class I3Logger {
+public:
+	virtual void Log(I3LogLevel level, const char *unit, const char *file,
+	    int line, const char *func, const char *format, ...) = 0;
+	I3LogLevel LogLevelForUnit(const char *unit);
+};
+
+class I3BasicLogger {
+public:
+	virtual void Log(I3LogLevel level, const char *unit, const char *file,
+	    int line, const char *func, const char *format, ...);
+	virtual void BasicLog(const char *string) = 0;
+}
+
+I3_POINTER_TYPEDEFS(I3Logger);
+
+// Root logger. If class/namespace has a method with the same name in scope,
+// it can have its own logger.
+I3LoggerPtr GetIcetrayLogger();
+void SetIcetrayLogger(I3LoggerPtr);
+
+#define I3_LOGGER GetIcetrayLogger()->Log
+#else // __cplusplus
+void i3_clogger(I3LogLevel level, const char *unit, const char *file,
+	    int line, const char *func, const char *format, ...);
+#define I3_LOGGER i3_clogger
 #endif
 
-#include <icetray/detail/CLogging.h>
+#define SET_LOGGER(X) \
+	const char *__icetray_logger_id const = X;
+
+// Set default logger in global namespace
+SET_LOGGER("icetray");
+
+#ifndef NDEBUG
+#define log_trace(format, ...) I3_LOGGER(LOG_TRACE, \
+    __icetray_logger_id, __FILE__, __LINE__, __PRETTY_FUNCTION__, format, \
+    ##__VA_ARGS__)
+#define log_debug(format, ...) I3_LOGGER(LOG_DEBUG, \
+    __icetray_logger_id, __FILE__, __LINE__, __PRETTY_FUNCTION__, format, \
+    ##__VA_ARGS__)
+#define log_info(format, ...) I3_LOGGER(LOG_INFO, \
+    __icetray_logger_id, __FILE__, __LINE__, __PRETTY_FUNCTION__, format, \
+    ##__VA_ARGS__)
+#else
+#define log_trace(format, ...)
+#define log_debug(format, ...)
+#define log_info(format, ...)
+#endif
+
+#define log_warn(format, ...) I3_LOGGER(LOG_WARN, \
+    __icetray_logger_id, __FILE__, __LINE__, __PRETTY_FUNCTION__, format, \
+    ##__VA_ARGS__)
+
+#ifdef __cplusplus
+#define log_fatal(format, ...) I3_LOGGER(LOG_FATAL, \
+    __icetray_logger_id, __FILE__, __LINE__, __PRETTY_FUNCTION__, format, \
+    ##__VA_ARGS__), throw std::runtime_error("log_fatal() called from " \
+    __PRETTY_FUNCTION__)
+#else
+#define log_fatal(format, ...) I3_LOGGER(LOG_FATAL, \
+    __icetray_logger_id, __FILE__, __LINE__, __PRETTY_FUNCTION__, format, \
+    ##__VA_ARGS__), exit(1)
+#endif
+
+#undef I3_LOGGER
 
 #endif //ifndef ICETRAY_I3LOGGING_H_INCLUDED
