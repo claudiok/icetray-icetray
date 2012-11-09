@@ -24,10 +24,31 @@ SetIcetrayLogger(I3LoggerPtr logger)
 	icetray_global_logger = logger;
 }
 
+I3Logger::I3Logger(I3LogLevel default_level) :
+    default_log_level_(default_level) {}
+I3Logger::~I3Logger() {}
+
 I3LogLevel
 I3Logger::LogLevelForUnit(const char *unit)
 {
-	return LOG_INFO;
+	std::map<std::string, I3LogLevel>::const_iterator iter =
+	    log_levels_.find(unit);
+	if (iter == log_levels_.end())
+		return default_log_level_;
+
+	return iter->second;
+}
+
+void
+I3Logger::SetLogLevelForUnit(const char *unit, I3LogLevel level)
+{
+	log_levels_[unit] = level;
+}
+
+void
+I3Logger::SetLogLevel(I3LogLevel level)
+{
+	default_log_level_ = level;
 }
 
 void

@@ -34,16 +34,29 @@ typedef enum {
 
 #include <icetray/I3PointerTypedefs.h>
 #include <stdexcept>
+#include <map>
 
 class I3Logger {
 public:
+	I3Logger(I3LogLevel default_level = LOG_INFO);
+	virtual ~I3Logger();
+
 	virtual void Log(I3LogLevel level, const char *unit, const char *file,
 	    int line, const char *func, const char *format, ...) = 0;
+
 	I3LogLevel LogLevelForUnit(const char *unit);
+	void SetLogLevelForUnit(const char *unit, I3LogLevel level);
+
+	void SetLogLevel(I3LogLevel level);
+private:
+	std::map<std::string, I3LogLevel> log_levels_;
+	I3LogLevel default_log_level_;
 };
 
 class I3BasicLogger : public I3Logger {
 public:
+	I3BasicLogger(I3LogLevel default_level = LOG_INFO);
+
 	virtual void Log(I3LogLevel level, const char *unit, const char *file,
 	    int line, const char *func, const char *format, ...);
 	virtual void BasicLog(const char *string) = 0;
