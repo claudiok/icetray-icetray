@@ -149,7 +149,7 @@ i3_add_library(icetray
 
   ${ICETRAY_PYTHON_SRC}
 
-  USE_TOOLS boost python log4cplus ${OPTIONAL_TOOLS}
+  USE_TOOLS boost python ${OPTIONAL_TOOLS}
   LINK_LIBRARIES ${BOOST_PYTHON} ${DCAP_LIBRARIES} ${LIBARCHIVE_LIBRARIES}
   ROOTCINT public/icetray/I3FrameObject.h)
 
