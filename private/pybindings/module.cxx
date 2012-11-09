@@ -43,27 +43,10 @@ void register_MyService();
 
 using namespace boost::python;
 
-#ifdef I3_LOG4CPLUS_LOGGING
-#include <log4cplus/hierarchy.h>
-
 void load_impl(const std::string& name, bool verbose = true ){
   load_project(name,verbose);
 }
 BOOST_PYTHON_FUNCTION_OVERLOADS(load_impl_overloads, load_impl,1,2);
-
-void disable_logging()
-{
-	::log4cplus::Logger::getDefaultHierarchy().disableAll();
-}
-
-#else
-void disable_logging() {}
-#endif
-
-void register_logging()
-{
-	def("disable_logging", &disable_logging);
-}
 
 BOOST_PYTHON_MODULE(icetray)
 {
@@ -103,7 +86,6 @@ BOOST_PYTHON_MODULE(icetray)
   register_I3TrayInfo();
   register_I3Bool();
   register_I3Int();
-  register_logging();
   register_MyService();
 
 }
