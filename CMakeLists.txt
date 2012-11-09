@@ -73,6 +73,7 @@ set(ICETRAY_PYTHON_SRC
   private/pybindings/I3Tray.cxx
   private/pybindings/I3Units.cxx
   private/pybindings/I3Frame.cxx
+  private/pybindings/I3Logging.cxx
   private/pybindings/I3Module.cxx
   private/pybindings/I3Context.cxx
   private/pybindings/I3Configuration.cxx

@@ -51,6 +51,9 @@ I3Logger::SetLogLevel(I3LogLevel level)
 	default_log_level_ = level;
 }
 
+I3BasicLogger::I3BasicLogger(I3LogLevel level)
+    : I3Logger(level) {}
+
 void
 I3BasicLogger::Log(I3LogLevel level, const char *unit, const char *file,
     int line, const char *func, const char *format, ...)

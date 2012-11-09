@@ -34,6 +34,7 @@ void register_I3Tray();
 void register_I3Units();
 void register_I3Frame();
 void register_I3FrameObject();
+void register_I3Logging();
 void register_I3Module();
 void register_I3Context();
 void register_I3Configuration();
@@ -77,6 +78,7 @@ BOOST_PYTHON_MODULE(icetray)
   register_I3Units();
   register_I3Frame();
   register_I3FrameObject();
+  register_I3Logging();
   register_I3Module();
   register_I3Context();
   register_I3Configuration();
