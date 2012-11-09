@@ -4,12 +4,16 @@
 // @author troy d. straszheim
 //
 #include <icetray/I3Logging.h>
+#include <icetray/I3SimpleLoggers.h>
 
 static I3LoggerPtr icetray_global_logger;
 
 I3LoggerPtr
 GetIcetrayLogger()
 {
+	if (!icetray_global_logger)
+		icetray_global_logger = I3LoggerPtr(new I3PrintfLogger);
+
 	return icetray_global_logger;
 }
 
