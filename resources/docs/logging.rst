@@ -1,7 +1,9 @@
 Logging
 =======
 
-How to use the logging system
+.. contents::
+
+How to Use the Logging System
 -----------------------------
 Call logging functions like you would call ``printf()``:
 
@@ -20,11 +22,7 @@ Call logging functions like you would call ``printf()``:
 
 Will output:
 
-.. highlight:: none
-
-::
-
-  DEBUG (MyClass):  here is a debug message, j is 6 (MyClass.h:14 in void MyClass::doSomething())
+  **DEBUG (MyClass)**:  here is a debug message, j is 6 (**MyClass.h:14** in **void MyClass::doSomething()**)
 
 There are several logging levels available.  Each has a different meaning:
 
@@ -37,7 +35,7 @@ There are several logging levels available.  Each has a different meaning:
 .. index:: log_fatal, log_error, log_warn, log_info, log_debug, log_trace
 
 =============   ====================================================================================
-function        semantics
+Function        Semantics
 =============   ====================================================================================
 ``log_fatal``   Only called for fatal errors, will throw an exception and data processing will stop.
 ``log_error``  	Non-fatal (recoverable) error. No exception thrown.
@@ -54,7 +52,7 @@ Here are some guidelines and example statements at each level to help
 you choose the right logging level:
 
 ==============  =============================================================================
-function        example
+Function        Example
 ==============  =============================================================================
 ``log_fatal``   (will cause exit) "Unable to open input file", "No DB connection available"
 ``log_error``   (won't exit, but your module has a serious problem that needs attention) "Found malformed event data", "divide by zero detected in module".
@@ -71,7 +69,7 @@ function        example
   (removed by the C preprocessor) and will not be available, no
   matter how you configure your logging output.
 
-How to add a custom logging channel to your module
+How to Add a Custom Logging Channel to your Module
 --------------------------------------------------
 
 .. index:: SET_LOGGER
@@ -85,19 +83,19 @@ I3SimpleModule.h:
 
 ::
 
- class I3SimpleModule : public I3PhysicsModule
+ class I3SimpleModule : public I3Module
  {
 
   public:
 
    I3SimpleModule(const I3Context& context);
    void Configure();
-   void Physics(I3Frame& frame);
+   void Physics(I3FramePtr frame);
    void Finish();
 
   private:
 
-   string outputFilename_;
+   std::string outputFilename_;
 
    SET_LOGGER("I3SimpleModule");
  };
@@ -138,6 +136,7 @@ Logging can be disabled by:
 .. highlight:: python
 
 ::
+
   icetray.I3Logger.global_logger = icetray.I3NullLogger()
 
 I3PrintfLogger
@@ -147,8 +146,7 @@ I3PrintfLogger sends log messages to the standard error stream (usually the cons
 including decorative colors unless standard error has been redirected to a file. This is
 the default logging module. Error messages look this:
 
-**ERROR (I3Tray):** This I3Tray has already been executed. Ignoring second call to Execute()
-(**I3Tray.cxx:442** in **void I3Tray:Execute()**)
+  **ERROR (I3Tray):** This I3Tray has already been executed. Ignoring second call to Execute() (**I3Tray.cxx:442** in **void I3Tray:Execute()**)
 
 The first section in bold shows the level of the log message (ERROR) and the logging unit
 (I3Tray) producing the error. The next part in normal text is the message passed to, in this
@@ -158,16 +156,15 @@ function from which the logging system was called.
 The default logger can be set to I3PrintfLogger by:
 
 ::
+
   icetray.I3Logger.global_logger = icetray.I3PrintfLogger()
 
 Python Logging
 ______________
 
-Icetray also includes a bridge to the `python logging facility` __, which contains a number
+Icetray also includes a bridge to the `python logging facility <http://docs.python.org/library/logging.html>`_, which contains a number
 of handlers able to do things like write log messages to a rotating set of files, to the
 system logging daemon, to email, or to a web server. You can also define your own.
-
-__ http://docs.python.org/library/logging.html
 
 Several convenience functions are provided for standard uses of the logging facility either
 to write to standard error (like I3PrintfLogger), to rotating log files, or to the syslog
@@ -176,20 +173,23 @@ daemon.
 To use python logging to the console, do:
 
 ::
+
   icetray.I3Logger.global_logger = icetray.logging.console()
 
 To use python logging to log files, do:
 
 ::
+
   icetray.I3Logger.global_logger = icetray.logging.rotating_files('/path/to/filename')
 
 To log to syslogd (e.g. the ``Console`` program on Mac OS X):
 
 ::
+
   icetray.I3Logger.global_logger = icetray.logging.syslog()
 
 More complicated things can be done if desired using the Python logging infrastructure --
-see the Python documentation for details.
+see the `Python documentation <http://docs.python.org/library/logging.html>`_ for details.
 
 Setting Logging Thresholds
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -200,6 +200,7 @@ this global threshold, this can be changed by I3Logger's ``setLevel()`` method.
 For example, to get more information, the global log threshold can be reduced to LOG_INFO:
 
 ::
+
   icetray.I3Logger.global_logger.setLevel(icetray.I3LogLevel.LOG_INFO)
 
 This can also be changed on a per-logging stream level. For example, to get extremely
@@ -207,5 +208,6 @@ verbose information just from I3Tray, while leaving all other subsystems at thei
 levels:
 
 ::
+
   icetray.I3Logger.global_logger.setLevelForUnit('I3Tray', icetray.I3LogLevel.LOG_TRACE)
 
