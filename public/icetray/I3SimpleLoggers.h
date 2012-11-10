@@ -29,9 +29,13 @@ public:
             int line, const char *func, const char *format, ...) {};
 }; 
 
-class I3PrintfLogger : public I3BasicLogger {
+class I3PrintfLogger : public I3Logger {
 public:
-	virtual void BasicLog(const char *string) { puts(string); }
+	I3PrintfLogger(I3LogLevel default_level = LOG_INFO);
+	virtual void Log(I3LogLevel level, const char *unit, const char *file,
+            int line, const char *func, const char *format, ...);
+private:
+	bool tty_;
 };
 
 #endif //ifndef ICETRAY_I3SIMPLELOGGERS_H_INCLUDED

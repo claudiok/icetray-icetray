@@ -98,6 +98,7 @@ I3BasicLogger::Log(I3LogLevel level, const char *unit, const char *file,
 	char log_message[messagesize + 1];
 
 	sprintf(log_message, "%s (%s): ", log_description, unit);
+	va_start(args, format);
 	vsprintf(&log_message[strlen(log_message)], format, args);
 	sprintf(log_message, "%s (%s:%d in %s)", log_message, file, line, func);
 
