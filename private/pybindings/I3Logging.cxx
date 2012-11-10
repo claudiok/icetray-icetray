@@ -12,28 +12,22 @@
 
 using namespace boost::python;
  
-struct I3LoggerWrapper : public I3Logger, public wrapper<I3Logger> {
-	void Log(I3LogLevel level, const char *unit, const char *file,
-	    int line, const char *func, const char *format, ...)
+class I3LoggerWrapper : public I3Logger, public wrapper<I3Logger> {
+public:
+	void Log(I3LogLevel level, const std::string &unit,
+	    const std::string &file, int line, const std::string &func,
+	    const std::string &log_message)
 	{
-		va_list args;
-		
-		va_start(args, format);
-		int messagesize = vsnprintf(NULL, 0, format, args);
-		
-		char log_message[messagesize + 1];
-		va_start(args, format);
-		vsprintf(log_message, format, args);
-		
 		if (override f = this->get_override("log")) {
-			f(level, unit, file, line, func, std::string(log_message));
+			f(level, unit, file, line, func, log_message);
 		} else {
-			PyErr_SetString(PyExc_NotImplementedError, "I3LoggerBase subclasses must implement log()");
+			PyErr_SetString(PyExc_NotImplementedError,
+			    "I3LoggerBase subclasses must implement log()");
 			throw error_already_set();
 		}
 	}
 	
-	I3LogLevel LogLevelForUnit(const char *unit)
+	I3LogLevel LogLevelForUnit(const std::string &unit)
 	{
 		if (override f = this->get_override("getLevelForUnit")) {
 			return f(unit);
@@ -42,7 +36,7 @@ struct I3LoggerWrapper : public I3Logger, public wrapper<I3Logger> {
 		}
 	}
 	
-	void SetLogLevelForUnit(const char *unit, I3LogLevel level)
+	void SetLogLevelForUnit(const std::string &unit, I3LogLevel level)
 	{
 		if (override f = this->get_override("setLevelForUnit")) {
 			f(unit, level);

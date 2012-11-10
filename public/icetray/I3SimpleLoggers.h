@@ -25,15 +25,17 @@
 
 class I3NullLogger : public I3Logger {
 public:
-	virtual void Log(I3LogLevel level, const char *unit, const char *file,
-            int line, const char *func, const char *format, ...) {};
+	virtual void Log(I3LogLevel level, const std::string &unit,
+	    const std::string &file, int line, const std::string &func,
+	    const std::string &message) {};
 }; 
 
 class I3PrintfLogger : public I3Logger {
 public:
-	I3PrintfLogger(I3LogLevel default_level = LOG_INFO);
-	virtual void Log(I3LogLevel level, const char *unit, const char *file,
-            int line, const char *func, const char *format, ...);
+	I3PrintfLogger(I3LogLevel default_level = I3DefaultLogLevel);
+	virtual void Log(I3LogLevel level, const std::string &unit,
+	    const std::string &file, int line, const std::string &func,
+	    const std::string &message);
 private:
 	bool tty_;
 };

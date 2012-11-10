@@ -13,8 +13,9 @@ I3PrintfLogger::I3PrintfLogger(I3LogLevel level)
 }
 
 void
-I3PrintfLogger::Log(I3LogLevel level, const char *unit, const char *file,
-    int line, const char *func, const char *format, ...)
+I3PrintfLogger::Log(I3LogLevel level, const std::string &unit,
+    const std::string &file, int line, const std::string &func,
+    const std::string &message)
 {
 	const char *log_description;
 	const char *log_prolog = "", *file_prolog = "", *log_epilog = "";
@@ -56,24 +57,18 @@ I3PrintfLogger::Log(I3LogLevel level, const char *unit, const char *file,
 		break;
 	}
 
-	va_list args;
-	va_start(args, format);
-
-	int messagesize = 0;
-	messagesize += snprintf(NULL, 0,
-	    "%s%s (%s):%s " " (%s%s:%d%s in %s%s%s)",
-	    log_prolog, log_description, unit, log_epilog, file_prolog, file,
-	    line, log_epilog, file_prolog, func, log_epilog);
-	messagesize += vsnprintf(NULL, 0, format, args);
+	int messagesize = snprintf(NULL, 0,
+	    "%s%s (%s):%s %s (%s%s:%d%s in %s%s%s)",
+	    log_prolog, log_description, unit.c_str(), log_epilog,
+	    message.c_str(), file_prolog, file.c_str(), line, log_epilog,
+	    file_prolog, func.c_str(), log_epilog);
 
 	char log_message[messagesize + 1];
 
-	sprintf(log_message, "%s%s (%s):%s ", log_prolog, log_description, unit,
-	    log_epilog);
-	va_start(args, format);
-	vsprintf(&log_message[strlen(log_message)], format, args);
-	sprintf(log_message, "%s (%s%s:%d%s in %s%s%s)", log_message,
-	    file_prolog, file, line, log_epilog, file_prolog, func, log_epilog);
+	sprintf(log_message, "%s%s (%s):%s %s (%s%s:%d%s in %s%s%s)",
+	    log_prolog, log_description, unit.c_str(), log_epilog,
+	    message.c_str(), file_prolog, file.c_str(), line, log_epilog,
+	    file_prolog, func.c_str(), log_epilog);
 
 	puts(log_message);
 }

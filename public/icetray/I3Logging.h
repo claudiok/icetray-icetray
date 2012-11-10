@@ -30,6 +30,8 @@ typedef enum {
 	LOG_FATAL
 } I3LogLevel;
 
+const I3LogLevel I3DefaultLogLevel = LOG_INFO;
+
 #if defined(__cplusplus)
 
 #include <icetray/I3PointerTypedefs.h>
@@ -38,14 +40,16 @@ typedef enum {
 
 class I3Logger {
 public:
-	I3Logger(I3LogLevel default_level = LOG_INFO);
+	I3Logger(I3LogLevel default_level = I3DefaultLogLevel);
 	virtual ~I3Logger();
 
-	virtual void Log(I3LogLevel level, const char *unit, const char *file,
-	    int line, const char *func, const char *format, ...) = 0;
+	virtual void Log(I3LogLevel level, const std::string &unit,
+	    const std::string &file, int line, const std::string &func,
+	    const std::string &message) = 0;
 
-	virtual I3LogLevel LogLevelForUnit(const char *unit);
-	virtual void SetLogLevelForUnit(const char *unit, I3LogLevel level);
+	virtual I3LogLevel LogLevelForUnit(const std::string &unit);
+	virtual void SetLogLevelForUnit(const std::string &unit,
+	    I3LogLevel level);
 
 	virtual void SetLogLevel(I3LogLevel level);
 private:
@@ -55,11 +59,12 @@ private:
 
 class I3BasicLogger : public I3Logger {
 public:
-	I3BasicLogger(I3LogLevel default_level = LOG_INFO);
+	I3BasicLogger(I3LogLevel default_level = I3DefaultLogLevel);
 
-	virtual void Log(I3LogLevel level, const char *unit, const char *file,
-	    int line, const char *func, const char *format, ...);
-	virtual void BasicLog(const char *string) = 0;
+	virtual void Log(I3LogLevel level, const std::string &unit,
+	    const std::string &file, int line, const std::string &func,
+	    const std::string &message);
+	virtual void BasicLog(const std::string &string) = 0;
 };
 
 I3_POINTER_TYPEDEFS(I3Logger);
@@ -69,10 +74,13 @@ I3_POINTER_TYPEDEFS(I3Logger);
 I3LoggerPtr GetIcetrayLogger();
 void SetIcetrayLogger(I3LoggerPtr);
 
-#define I3_LOGGER GetIcetrayLogger()->Log
+std::string I3LoggingStringF(const char *format, ...);
+#define I3_LOGGER(level, id, file, line, func, format, ...) \
+    GetIcetrayLogger()->Log(level, id, file, line, func, \
+    I3LoggingStringF(format, ##__VA_ARGS__))
 #else // __cplusplus
 void i3_clogger(I3LogLevel level, const char *unit, const char *file,
-	    int line, const char *func, const char *format, ...);
+    int line, const char *func, const char *format, ...);
 #define I3_LOGGER i3_clogger
 #endif
 

@@ -24,12 +24,27 @@ SetIcetrayLogger(I3LoggerPtr logger)
 	icetray_global_logger = logger;
 }
 
+std::string
+I3LoggingStringF(const char *format, ...)
+{
+	va_list args;
+	va_start(args, format);
+
+	int messagesize = vsnprintf(NULL, 0, format, args);
+	char log_message[messagesize + 1];
+
+	va_start(args, format);
+	vsprintf(log_message, format, args);
+
+	return std::string(log_message);
+}
+
 I3Logger::I3Logger(I3LogLevel default_level) :
     default_log_level_(default_level) {}
 I3Logger::~I3Logger() {}
 
 I3LogLevel
-I3Logger::LogLevelForUnit(const char *unit)
+I3Logger::LogLevelForUnit(const std::string &unit)
 {
 	std::map<std::string, I3LogLevel>::const_iterator iter =
 	    log_levels_.find(unit);
@@ -40,7 +55,7 @@ I3Logger::LogLevelForUnit(const char *unit)
 }
 
 void
-I3Logger::SetLogLevelForUnit(const char *unit, I3LogLevel level)
+I3Logger::SetLogLevelForUnit(const std::string &unit, I3LogLevel level)
 {
 	log_levels_[unit] = level;
 }
@@ -55,8 +70,9 @@ I3BasicLogger::I3BasicLogger(I3LogLevel level)
     : I3Logger(level) {}
 
 void
-I3BasicLogger::Log(I3LogLevel level, const char *unit, const char *file,
-    int line, const char *func, const char *format, ...)
+I3BasicLogger::Log(I3LogLevel level, const std::string &unit,
+    const std::string &file, int line, const std::string &func,
+    const std::string &message)
 {
 	const char *log_description;
 
@@ -87,20 +103,12 @@ I3BasicLogger::Log(I3LogLevel level, const char *unit, const char *file,
 		break;
 	}
 
-	va_list args;
-	va_start(args, format);
-
-	int messagesize = 0;
-	messagesize += snprintf(NULL, 0, "%s (%s): " " (%s:%d in %s)",
-	    log_description, unit, file, line, func);
-	messagesize += vsnprintf(NULL, 0, format, args);
-
+	int messagesize = snprintf(NULL, 0, "%s (%s): %s (%s:%d in %s)",
+	    log_description, unit.c_str(), message.c_str(), file.c_str(), line,
+	    func.c_str());
 	char log_message[messagesize + 1];
-
-	sprintf(log_message, "%s (%s): ", log_description, unit);
-	va_start(args, format);
-	vsprintf(&log_message[strlen(log_message)], format, args);
-	sprintf(log_message, "%s (%s:%d in %s)", log_message, file, line, func);
+	sprintf(log_message, "%s (%s): %s (%s:%d in %s)", log_description,
+	    unit.c_str(), message.c_str(), file.c_str(), line, func.c_str());
 
 	BasicLog(log_message);
 }
