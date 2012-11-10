@@ -13,7 +13,7 @@
 using namespace boost::python;
  
 struct I3LoggerWrapper : public I3Logger, public wrapper<I3Logger> {
-	virtual void Log(I3LogLevel level, const char *unit, const char *file,
+	void Log(I3LogLevel level, const char *unit, const char *file,
 	    int line, const char *func, const char *format, ...)
 	{
 		va_list args;
@@ -32,6 +32,33 @@ struct I3LoggerWrapper : public I3Logger, public wrapper<I3Logger> {
 			throw error_already_set();
 		}
 	}
+	
+	I3LogLevel LogLevelForUnit(const char *unit)
+	{
+		if (override f = this->get_override("getLevelForUnit")) {
+			return f(unit);
+		} else {
+			return I3Logger::LogLevelForUnit(unit);
+		}
+	}
+	
+	void SetLogLevelForUnit(const char *unit, I3LogLevel level)
+	{
+		if (override f = this->get_override("setLevelForUnit")) {
+			f(unit, level);
+		} else {
+			I3Logger::SetLogLevelForUnit(unit, level);
+		}
+	}
+
+	void SetLogLevel(I3LogLevel level)
+	{
+		if (override f = this->get_override("setLevel")) {
+			f(level);
+		} else {
+			I3Logger::SetLogLevel(level);
+		}
+	}
 };
 
 void register_I3Logging()
@@ -39,6 +66,9 @@ void register_I3Logging()
 	class_<I3Logger, boost::shared_ptr<I3Logger>, boost::noncopyable>
 	    ("I3Logger", "Logging base class", no_init)
 		.add_static_property("global_logger", &GetIcetrayLogger, &SetIcetrayLogger)
+		.def("getLevelForUnit", &I3Logger::LogLevelForUnit)
+		.def("setLevelForUnit", &I3Logger::SetLogLevelForUnit)
+		.def("setLevel", &I3Logger::SetLogLevel)
 	;
 	
 	enum_<I3LogLevel>("I3LogLevel")
@@ -52,6 +82,9 @@ void register_I3Logging()
 	
 	class_<I3LoggerWrapper, boost::shared_ptr<I3LoggerWrapper>, boost::noncopyable>
 	    ("I3LoggerBase", "Base class for Python-side logging implementations")
+		.def("getLevelForUnit", &I3LoggerWrapper::LogLevelForUnit)
+		.def("setLevelForUnit", &I3LoggerWrapper::SetLogLevelForUnit)
+		.def("setLevel", &I3LoggerWrapper::SetLogLevel)
 	;
 
 }
