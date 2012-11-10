@@ -44,10 +44,10 @@ public:
 	virtual void Log(I3LogLevel level, const char *unit, const char *file,
 	    int line, const char *func, const char *format, ...) = 0;
 
-	I3LogLevel LogLevelForUnit(const char *unit);
-	void SetLogLevelForUnit(const char *unit, I3LogLevel level);
+	virtual I3LogLevel LogLevelForUnit(const char *unit);
+	virtual void SetLogLevelForUnit(const char *unit, I3LogLevel level);
 
-	void SetLogLevel(I3LogLevel level);
+	virtual void SetLogLevel(I3LogLevel level);
 private:
 	std::map<std::string, I3LogLevel> log_levels_;
 	I3LogLevel default_log_level_;
