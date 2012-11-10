@@ -9,6 +9,7 @@
 #include <boost/preprocessor.hpp>
 
 #include <icetray/I3Logging.h>
+#include <icetray/I3SimpleLoggers.h>
 
 using namespace boost::python;
  
@@ -74,6 +75,9 @@ void register_I3Logging()
 		.def("setLevelForUnit", &I3Logger::SetLogLevelForUnit)
 		.def("setLevel", &I3Logger::SetLogLevel)
 	;
+
+	class_<I3NullLogger, bases<I3Logger>, boost::shared_ptr<I3NullLogger>, boost::noncopyable>("I3NullLogger", "Logger that does not log. Useful if you don't want log messages");
+	class_<I3PrintfLogger, bases<I3Logger>, boost::shared_ptr<I3PrintfLogger>, boost::noncopyable>("I3PrintfLogger", "Logger that prints error messages to stderr (in color, if stderr is a tty).", init<I3LogLevel>());
 }
 
 
