@@ -79,6 +79,10 @@ std::string I3LoggingStringF(const char *format, ...);
     GetIcetrayLogger()->Log(level, id, file, line, func, \
     I3LoggingStringF(format, ##__VA_ARGS__))
 
+#define I3_STREAM_LOGGER(level, id, file, line, func, msg, epilogue) \
+    { std::ostringstream s; s << msg; GetIcetrayLogger()->Log(level, \
+    id, file, line, func, s.str()); epilogue }
+
 extern "C" {
 #endif // __cplusplus
 void i3_clogger(I3LogLevel level, const char *unit, const char *file,
@@ -105,10 +109,21 @@ SET_LOGGER("icetray");
 #define log_info(format, ...) I3_LOGGER(LOG_INFO, \
     __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__, format, \
     ##__VA_ARGS__)
+#ifdef __cplusplus
+#define log_trace_stream(msg) I3_STREAM_LOGGER(LOG_TRACE, \
+    __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__, msg, )
+#define log_debug_stream(msg) I3_STREAM_LOGGER(LOG_DEBUG, \
+    __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__, msg, )
+#define log_info_stream(msg) I3_STREAM_LOGGER(LOG_INFO, \
+    __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__, msg, )
+#endif
 #else
 #define log_trace(format, ...)
 #define log_debug(format, ...)
 #define log_info(format, ...)
+#define log_trace_stream(msg)
+#define log_debug_stream(msg)
+#define log_info_stream(msg)
 #endif
 
 #define log_warn(format, ...) I3_LOGGER(LOG_WARN, \
@@ -123,6 +138,13 @@ SET_LOGGER("icetray");
     __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__, format, \
     ##__VA_ARGS__), throw std::runtime_error(I3LoggingStringF(format, \
     ##__VA_ARGS__) + " (in " + __PRETTY_FUNCTION__ + ")")
+#define log_warn_stream(msg) I3_STREAM_LOGGER(LOG_WARN, \
+    __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__, msg, )
+#define log_error_stream(msg) I3_STREAM_LOGGER(LOG_ERROR, \
+    __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__, msg, )
+#define log_fatal_stream(msg) I3_STREAM_LOGGER(LOG_FATAL, \
+    __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__, msg, \
+    throw std::runtime_error(s.str() + " (in " + __PRETTY_FUNCTION__ + ")");)
 #else
 #define log_fatal(format, ...) I3_LOGGER(LOG_FATAL, \
     __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__, format, \
