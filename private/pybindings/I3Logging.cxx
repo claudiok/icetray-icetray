@@ -22,10 +22,8 @@ struct I3LoggerWrapper : public I3Logger, public wrapper<I3Logger> {
 		int messagesize = vsnprintf(NULL, 0, format, args);
 		
 		char log_message[messagesize + 1];
-		log_message[0] = 0;
-		
 		va_start(args, format);
-		vsprintf(&log_message[strlen(log_message)], format, args);
+		vsprintf(log_message, format, args);
 		
 		if (override f = this->get_override("log")) {
 			f(level, unit, file, line, func, std::string(log_message));
