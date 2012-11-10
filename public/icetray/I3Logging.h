@@ -78,9 +78,14 @@ std::string I3LoggingStringF(const char *format, ...);
 #define I3_LOGGER(level, id, file, line, func, format, ...) \
     GetIcetrayLogger()->Log(level, id, file, line, func, \
     I3LoggingStringF(format, ##__VA_ARGS__))
-#else // __cplusplus
+
+extern "C" {
+#endif // __cplusplus
 void i3_clogger(I3LogLevel level, const char *unit, const char *file,
     int line, const char *func, const char *format, ...);
+#ifdef __cplusplus
+}
+#else
 #define I3_LOGGER i3_clogger
 #endif
 
@@ -116,7 +121,8 @@ SET_LOGGER("icetray");
 #ifdef __cplusplus
 #define log_fatal(format, ...) I3_LOGGER(LOG_FATAL, \
     __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__, format, \
-    ##__VA_ARGS__), throw std::runtime_error("log_fatal")
+    ##__VA_ARGS__), throw std::runtime_error(I3LoggingStringF(format, \
+    ##__VA_ARGS__) + " (in " + __PRETTY_FUNCTION__ + ")")
 #else
 #define log_fatal(format, ...) I3_LOGGER(LOG_FATAL, \
     __icetray_logger_id(), __FILE__, __LINE__, __PRETTY_FUNCTION__, format, \

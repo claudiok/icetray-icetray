@@ -113,3 +113,19 @@ I3BasicLogger::Log(I3LogLevel level, const std::string &unit,
 	BasicLog(log_message);
 }
 
+void
+i3_clogger(I3LogLevel level, const char *unit, const char *file, int line,
+    const char *func, const char *format, ...)
+{
+	va_list args;
+	va_start(args, format);
+
+	int messagesize = vsnprintf(NULL, 0, format, args);
+	char log_message[messagesize + 1];
+
+	va_start(args, format);
+	vsprintf(log_message, format, args);
+
+	GetIcetrayLogger()->Log(level, unit, file, line, func, log_message);
+}
+
