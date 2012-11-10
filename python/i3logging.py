@@ -1,5 +1,5 @@
 
-import logging
+import logging, string
 from icecube.icetray import I3Logger, I3LoggerBase, I3LogLevel
 
 class LoggingBridge(I3LoggerBase):
@@ -27,7 +27,20 @@ class LoggingBridge(I3LoggerBase):
 	def setLevelForUnit(self, unit, level):
 		self.getLogger(unit).setLevel(self.pylevels[level])
 	def setLevel(self, level):
-		self.getLogger("".setLevel(self.pylevels[level]))
+		self.getLogger("").setLevel(self.pylevels[level])
+
+class ColorFormatter(logging.Formatter):
+	def format(self, record):
+		record.message = record.getMessage()
+		if string.find(self._fmt,"%(asctime)") >= 0:
+			record.asctime = self.formatTime(record, self.datefmt)
+		d = dict(record.__dict__)
+		if record.levelname in ("CRITICAL", "ERROR"):
+			d['levelname'] = "\x1b[1;31m %s \x1b[0m" % d['levelname']
+		d['filename'] = "\x1b[1m%s\x1b[0m" % d['filename']
+			
+		s = self._fmt % d
+		return "\x1b[1m%s\x1b[0m" % s
 
 BASIC_FORMAT = "%(filename)s:%(lineno)s %(levelname)s: %(message)s"
 
@@ -36,8 +49,12 @@ def _setup(format=BASIC_FORMAT):
 	logging.basicConfig(format=format)
 	I3Logger.global_logger = LoggingBridge()
 
-def console():
+def console(colors=True):
+	import sys
+	from os import isatty
 	_setup()
+	if colors and isatty(sys.stderr.fileno()):
+		logging.root.handlers[0].setFormatter(ColorFormatter(BASIC_FORMAT))
 
 def rotating_files(filename, maxBytes=0, backupCount=0):
 	from logging.handlers import RotatingFileHandler
