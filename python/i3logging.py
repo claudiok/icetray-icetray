@@ -55,6 +55,8 @@ def console(colors=True):
 	_setup()
 	if colors and isatty(sys.stderr.fileno()):
 		logging.root.handlers[0].setFormatter(ColorFormatter(BASIC_FORMAT))
+	else:
+		logging.root.handlers[0].setFormatter(logging.Formatter(BASIC_FORMAT))
 
 def rotating_files(filename, maxBytes=0, backupCount=0):
 	from logging.handlers import RotatingFileHandler
