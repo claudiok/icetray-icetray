@@ -9,7 +9,7 @@
 I3PrintfLogger::I3PrintfLogger(I3LogLevel level)
     : I3Logger(level)
 {
-	tty_ = isatty(1);
+	tty_ = isatty(STDERR_FILENO);
 }
 
 void
@@ -58,18 +58,18 @@ I3PrintfLogger::Log(I3LogLevel level, const std::string &unit,
 	}
 
 	int messagesize = snprintf(NULL, 0,
-	    "%s%s (%s):%s %s (%s%s:%d%s in %s%s%s)",
+	    "%s%s (%s):%s %s (%s%s:%d%s in %s%s%s)\n",
 	    log_prolog, log_description, unit.c_str(), log_epilog,
 	    message.c_str(), file_prolog, file.c_str(), line, log_epilog,
 	    file_prolog, func.c_str(), log_epilog);
 
 	char log_message[messagesize + 1];
 
-	sprintf(log_message, "%s%s (%s):%s %s (%s%s:%d%s in %s%s%s)",
+	sprintf(log_message, "%s%s (%s):%s %s (%s%s:%d%s in %s%s%s)\n",
 	    log_prolog, log_description, unit.c_str(), log_epilog,
 	    message.c_str(), file_prolog, file.c_str(), line, log_epilog,
 	    file_prolog, func.c_str(), log_epilog);
 
-	puts(log_message);
+	fputs(log_message, stderr);
 }
 
