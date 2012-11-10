@@ -1,8 +1,8 @@
 
 import logging, string
-from icecube.icetray import I3Logger, I3LoggerBase, I3LogLevel
+from icecube.icetray import I3Logger, I3LogLevel
 
-class LoggingBridge(I3LoggerBase):
+class LoggingBridge(I3Logger):
 	pylevels = {
 		I3LogLevel.LOG_TRACE : 5,
 		I3LogLevel.LOG_DEBUG : logging.DEBUG,
@@ -23,7 +23,7 @@ class LoggingBridge(I3LoggerBase):
 		record = logging.LogRecord(logger.name, self.pylevels[level], file, line, msg, tuple(), None, None)
 		logger.handle(record)
 	def getLevelForUnit(self, unit):
-		self.i3levels.get(self.getLogger(unit).getEffectiveLevel(), I3LogLevel.LOG_FATAL)
+		return self.i3levels.get(self.getLogger(unit).getEffectiveLevel(), I3LogLevel.LOG_FATAL)
 	def setLevelForUnit(self, unit, level):
 		self.getLogger(unit).setLevel(self.pylevels[level])
 	def setLevel(self, level):

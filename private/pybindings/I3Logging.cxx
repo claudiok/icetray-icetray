@@ -57,14 +57,6 @@ public:
 
 void register_I3Logging()
 {
-	class_<I3Logger, boost::shared_ptr<I3Logger>, boost::noncopyable>
-	    ("I3Logger", "Logging base class", no_init)
-		.add_static_property("global_logger", &GetIcetrayLogger, &SetIcetrayLogger)
-		.def("getLevelForUnit", &I3Logger::LogLevelForUnit)
-		.def("setLevelForUnit", &I3Logger::SetLogLevelForUnit)
-		.def("setLevel", &I3Logger::SetLogLevel)
-	;
-	
 	enum_<I3LogLevel>("I3LogLevel")
 		.value("LOG_TRACE", LOG_TRACE)
 		.value("LOG_DEBUG", LOG_DEBUG)
@@ -73,14 +65,15 @@ void register_I3Logging()
 		.value("LOG_ERROR", LOG_ERROR)
 		.value("LOG_FATAL", LOG_FATAL)
 	;
-	
-	class_<I3LoggerWrapper, boost::shared_ptr<I3LoggerWrapper>, boost::noncopyable>
-	    ("I3LoggerBase", "Base class for Python-side logging implementations")
-		.def("getLevelForUnit", &I3LoggerWrapper::LogLevelForUnit)
-		.def("setLevelForUnit", &I3LoggerWrapper::SetLogLevelForUnit)
-		.def("setLevel", &I3LoggerWrapper::SetLogLevel)
-	;
 
+	class_<I3Logger, boost::shared_ptr<I3Logger>, boost::noncopyable>("I3LoggerBase", "C++ logging abstract base class", no_init);
+	class_<I3LoggerWrapper, boost::shared_ptr<I3LoggerWrapper>, boost::noncopyable>
+	    ("I3Logger", "Logging base class")
+		.add_static_property("global_logger", &GetIcetrayLogger, &SetIcetrayLogger)
+		.def("getLevelForUnit", &I3Logger::LogLevelForUnit)
+		.def("setLevelForUnit", &I3Logger::SetLogLevelForUnit)
+		.def("setLevel", &I3Logger::SetLogLevel)
+	;
 }
 
 
