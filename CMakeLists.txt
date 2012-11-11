@@ -96,7 +96,6 @@ i3_add_library(icetray
   private/icetray/load_project.cxx
   private/icetray/I3FrameObject.cxx      
   private/icetray/I3Logging.cxx        
-  private/icetray/PythonLogging.cxx            
   private/icetray/I3Configuration.cxx
   private/icetray/I3ConfigurationImpl.cxx
   private/icetray/I3Deprecation.cxx
