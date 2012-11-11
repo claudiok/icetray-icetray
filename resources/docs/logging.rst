@@ -24,6 +24,25 @@ Will output:
 
   **DEBUG (MyClass)**:  here is a debug message, j is 6 (**MyClass.h:14** in **void MyClass::doSomething()**)
 
+Each of the ``printf()``-style logging functions has an ``iostreams``-style analogue that can be
+useful for easily formatting non-POD types. For example, both of following logging calls: 
+
+::
+   
+   #include <icetray/I3Logging.h>
+  
+    void doSomething() {
+      OMKey key(64, 26);
+      std::string name("InIceRawData")
+      log_debug("Looking for OMKey(%d,%d) in %s", key.GetString(), key.GetOM(), name.c_str());
+      log_debug_stream("Looking for " << key << " in " << name);
+    }
+
+would yield identical output:
+
+    **DEBUG (MyClass)**:  Looking for OMKey(64,26) in InIceRawData (**MyClass.h:14** in **void MyClass::doSomething()**)
+
+
 There are several logging levels available.  Each has a different meaning:
 
 .. _log_fatal:
