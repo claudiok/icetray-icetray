@@ -163,9 +163,9 @@ ______________
 
 I3PrintfLogger sends log messages to the standard error stream (usually the console),
 including decorative colors unless standard error has been redirected to a file. This is
-the default logging module. Error messages look this:
+the default logging module. Error messages look like this:
 
-  **ERROR (I3Tray):** This I3Tray has already been executed. Ignoring second call to Execute() (**I3Tray.cxx:442** in **void I3Tray:Execute()**)
+  **ERROR (I3Tray):** This I3Tray has already been executed. Ignoring second call to Execute() (**I3Tray.cxx:442** in **void I3Tray::Execute()**)
 
 The first section in bold shows the level of the log message (ERROR) and the logging unit
 (I3Tray) producing the error. The next part in normal text is the message passed to, in this
