@@ -193,19 +193,19 @@ To use python logging to the console, do:
 
 ::
 
-  icetray.I3Logger.global_logger = icetray.logging.console()
+  icetray.logging.console()
 
 To use python logging to log files, do:
 
 ::
 
-  icetray.I3Logger.global_logger = icetray.logging.rotating_files('/path/to/filename')
+  icetray.logging.rotating_files('/path/to/filename')
 
 To log to syslogd (e.g. the ``Console`` program on Mac OS X):
 
 ::
 
-  icetray.I3Logger.global_logger = icetray.logging.syslog()
+  icetray.logging.syslog()
 
 More complicated things can be done if desired using the Python logging infrastructure --
 see the `Python documentation <http://docs.python.org/library/logging.html>`_ for details.
