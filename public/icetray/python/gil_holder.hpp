@@ -25,3 +25,4 @@ private:
 }}}
 
 #endif // ICETRAY_PYTHON_GIL_HOLDER_HPP_INCLUDED
+
