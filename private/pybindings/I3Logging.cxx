@@ -31,7 +31,7 @@ public:
 	I3LogLevel LogLevelForUnit(const std::string &unit)
 	{
 		detail::gil_holder gil;
-		if (override f = this->get_override("getLevelForUnit")) {
+		if (override f = this->get_override("get_level_for_unit")) {
 			return f(unit);
 		} else {
 			return I3Logger::LogLevelForUnit(unit);
@@ -41,7 +41,7 @@ public:
 	void SetLogLevelForUnit(const std::string &unit, I3LogLevel level)
 	{
 		detail::gil_holder gil;
-		if (override f = this->get_override("setLevelForUnit")) {
+		if (override f = this->get_override("set_level_for_unit")) {
 			f(unit, level);
 		} else {
 			I3Logger::SetLogLevelForUnit(unit, level);
@@ -51,7 +51,7 @@ public:
 	void SetLogLevel(I3LogLevel level)
 	{
 		detail::gil_holder gil;
-		if (override f = this->get_override("setLevel")) {
+		if (override f = this->get_override("set_level")) {
 			f(level);
 		} else {
 			I3Logger::SetLogLevel(level);
@@ -79,9 +79,9 @@ void register_I3Logging()
 	class_<I3LoggerWrapper, boost::shared_ptr<I3LoggerWrapper>, boost::noncopyable>
 	    ("I3Logger", "Logging base class")
 		.add_static_property("global_logger", &GetIcetrayLogger, &SetIcetrayLogger)
-		.def("getLevelForUnit", &I3Logger::LogLevelForUnit)
-		.def("setLevelForUnit", &I3Logger::SetLogLevelForUnit)
-		.def("setLevel", &I3Logger::SetLogLevel)
+		.def("get_level_for_unit", &I3Logger::LogLevelForUnit)
+		.def("set_level_for_unit", &I3Logger::SetLogLevelForUnit)
+		.def("set_level", &I3Logger::SetLogLevel)
 	;
 
 	class_<I3NullLogger, bases<I3Logger>, boost::shared_ptr<I3NullLogger>, boost::noncopyable>("I3NullLogger", "Logger that does not log. Useful if you don't want log messages");

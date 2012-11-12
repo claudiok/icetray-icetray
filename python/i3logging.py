@@ -22,11 +22,11 @@ class LoggingBridge(I3Logger):
 		logger = self.getLogger(unit)
 		record = logging.LogRecord(logger.name, self.pylevels[level], file, line, msg, tuple(), None, None)
 		logger.handle(record)
-	def getLevelForUnit(self, unit):
+	def get_level_for_unit(self, unit):
 		return self.i3levels.get(self.getLogger(unit).getEffectiveLevel(), I3LogLevel.LOG_FATAL)
-	def setLevelForUnit(self, unit, level):
+	def set_level_for_unit(self, unit, level):
 		self.getLogger(unit).setLevel(self.pylevels[level])
-	def setLevel(self, level):
+	def set_level(self, level):
 		self.getLogger("").setLevel(self.pylevels[level])
 
 class ColorFormatter(logging.Formatter):
