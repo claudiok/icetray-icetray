@@ -7,6 +7,7 @@
 
 #include <boost/python.hpp>
 #include <boost/preprocessor.hpp>
+#include <icetray/python/gil_holder.hpp>
 
 #include <icetray/I3Logging.h>
 #include <icetray/I3SimpleLoggers.h>
@@ -19,17 +20,17 @@ public:
 	    const std::string &file, int line, const std::string &func,
 	    const std::string &log_message)
 	{
+		detail::gil_holder gil;
 		if (override f = this->get_override("log")) {
 			f(level, unit, file, line, func, log_message);
 		} else {
-			PyErr_SetString(PyExc_NotImplementedError,
-			    "I3LoggerBase subclasses must implement log()");
-			throw error_already_set();
+			RAISE(NotImplementedError, "I3LoggerBase subclasses must implement log()");
 		}
 	}
 	
 	I3LogLevel LogLevelForUnit(const std::string &unit)
 	{
+		detail::gil_holder gil;
 		if (override f = this->get_override("getLevelForUnit")) {
 			return f(unit);
 		} else {
@@ -39,6 +40,7 @@ public:
 	
 	void SetLogLevelForUnit(const std::string &unit, I3LogLevel level)
 	{
+		detail::gil_holder gil;
 		if (override f = this->get_override("setLevelForUnit")) {
 			f(unit, level);
 		} else {
@@ -48,6 +50,7 @@ public:
 
 	void SetLogLevel(I3LogLevel level)
 	{
+		detail::gil_holder gil;
 		if (override f = this->get_override("setLevel")) {
 			f(level);
 		} else {
@@ -58,6 +61,10 @@ public:
 
 void register_I3Logging()
 {
+	// Acquire the Global Interpeter Lock and bless ourselves as
+	// the main thread; this is a no-op if already called elsewhere.
+	PyEval_InitThreads();
+	
 	enum_<I3LogLevel>("I3LogLevel")
 		.value("LOG_TRACE", LOG_TRACE)
 		.value("LOG_DEBUG", LOG_DEBUG)
@@ -66,6 +73,7 @@ void register_I3Logging()
 		.value("LOG_ERROR", LOG_ERROR)
 		.value("LOG_FATAL", LOG_FATAL)
 	;
+	
 
 	class_<I3Logger, boost::shared_ptr<I3Logger>, boost::noncopyable>("I3LoggerBase", "C++ logging abstract base class", no_init);
 	class_<I3LoggerWrapper, boost::shared_ptr<I3LoggerWrapper>, boost::noncopyable>
