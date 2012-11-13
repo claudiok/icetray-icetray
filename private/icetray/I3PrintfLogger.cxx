@@ -57,18 +57,25 @@ I3PrintfLogger::Log(I3LogLevel level, const std::string &unit,
 		break;
 	}
 
+	std::string trimmed_filename;
+	size_t lastslash = file.rfind('/');
+	if (lastslash != std::string::npos)
+		trimmed_filename = file.substr(lastslash+1);
+	else
+		trimmed_filename = file;
+
 	int messagesize = snprintf(NULL, 0,
 	    "%s%s (%s):%s %s (%s%s:%d%s in %s%s%s)\n",
 	    log_prolog, log_description, unit.c_str(), log_epilog,
-	    message.c_str(), file_prolog, file.c_str(), line, log_epilog,
-	    file_prolog, func.c_str(), log_epilog);
+	    message.c_str(), file_prolog, trimmed_filename.c_str(), line,
+	    log_epilog, file_prolog, func.c_str(), log_epilog);
 
 	char log_message[messagesize + 1];
 
 	sprintf(log_message, "%s%s (%s):%s %s (%s%s:%d%s in %s%s%s)\n",
 	    log_prolog, log_description, unit.c_str(), log_epilog,
-	    message.c_str(), file_prolog, file.c_str(), line, log_epilog,
-	    file_prolog, func.c_str(), log_epilog);
+	    message.c_str(), file_prolog, trimmed_filename.c_str(), line,
+	    log_epilog, file_prolog, func.c_str(), log_epilog);
 
 	fputs(log_message, stderr);
 }
