@@ -74,7 +74,8 @@ I3_POINTER_TYPEDEFS(I3Logger);
 I3LoggerPtr GetIcetrayLogger();
 void SetIcetrayLogger(I3LoggerPtr);
 
-std::string I3LoggingStringF(const char *format, ...);
+std::string I3LoggingStringF(const char *format, ...)
+    __attribute__((__format__ (__printf__, 1, 2)));
 #define I3_LOGGER(level, id, file, line, func, format, ...) \
     GetIcetrayLogger()->Log(level, id, file, line, func, \
     I3LoggingStringF(format, ##__VA_ARGS__))
@@ -86,7 +87,8 @@ std::string I3LoggingStringF(const char *format, ...);
 extern "C" {
 #endif // __cplusplus
 void i3_clogger(I3LogLevel level, const char *unit, const char *file,
-    int line, const char *func, const char *format, ...);
+    int line, const char *func, const char *format, ...)
+    __attribute__((__format__ (__printf__, 6, 7)));
 #ifdef __cplusplus
 }
 #else
