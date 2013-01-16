@@ -12,6 +12,9 @@ class LoggingBridge(I3Logger):
 		I3LogLevel.LOG_FATAL : logging.CRITICAL,
 	}
 	i3levels = dict([(v, k) for k, v in pylevels.iteritems()])
+	def __init__(self):
+		I3Logger.__init__(self)
+		self.getLogger("").setLevel(logging.INFO)
 	def getLogger(self, unit):
 		if len(unit) > 0:
 			name = "icecube.%s" % unit
@@ -20,8 +23,9 @@ class LoggingBridge(I3Logger):
 		return logging.getLogger(name)
 	def log(self, level, unit, file, line, func, msg):
 		logger = self.getLogger(unit)
-		record = logging.LogRecord(logger.name, self.pylevels[level], file, line, msg, tuple(), None, None)
-		logger.handle(record)
+		if logger.isEnabledFor(self.pylevels[level]):
+			record = logging.LogRecord(logger.name, self.pylevels[level], file, line, msg, tuple(), None, None)
+			logger.handle(record)
 	def get_level_for_unit(self, unit):
 		return self.i3levels.get(self.getLogger(unit).getEffectiveLevel(), I3LogLevel.LOG_FATAL)
 	def set_level_for_unit(self, unit, level):
