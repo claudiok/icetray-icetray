@@ -32,6 +32,7 @@
 #include <icetray/I3DefaultName.h>
 #include <icetray/serialization.h>
 #include <icetray/is_shared_ptr.h>
+#include <icetray/python/gil_holder.hpp>
 
 /**
  * @brief This class holds the configuration.
@@ -71,6 +72,7 @@ public:
   Add(const std::string& name, const std::string& description, 
       const T& default_value)
   {
+    boost::python::detail::gil_holder lock;
     // forward to the boost::python::object version
     boost::python::object obj(default_value);
     Add(name, description, obj);
@@ -90,6 +92,7 @@ public:
     typename boost::enable_if<is_shared_ptr<T>, T>::type
   Get(const std::string& name) const
   {
+    boost::python::detail::gil_holder lock;
     boost::python::object obj(Get(name));
     if(obj.ptr() == Py_None) return T();
     return boost::python::extract<T>(obj);
@@ -99,6 +102,7 @@ public:
     typename boost::disable_if<is_shared_ptr<T>, T>::type
   Get(const std::string& name) const
   {
+    boost::python::detail::gil_holder lock;
     boost::python::object obj(Get(name));
     return boost::python::extract<T>(obj);
   }

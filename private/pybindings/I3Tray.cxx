@@ -32,6 +32,7 @@
 #include <icetray/I3Logging.h>
 #include <icetray/I3Tray.h>
 #include <icetray/OMKey.h>
+#include <icetray/python/gil_holder.hpp>
 
 using std::string;
 
@@ -88,6 +89,20 @@ static std::string I3TrayString(I3Tray &tray) {
   return str.str();
 }
 
+static void
+Execute(I3Tray &tray)
+{
+	detail::gil_releaser unlock;
+	tray.Execute();
+}
+
+static void
+ExecuteN(I3Tray &tray, unsigned n)
+{
+	detail::gil_releaser unlock;
+	tray.Execute(n);
+}
+
 void register_I3Tray()
 {
 
@@ -98,8 +113,8 @@ void register_I3Tray()
   void (I3Tray::*Execute_1)(unsigned)          = &I3Tray::Execute;
 
   class_<I3Tray, boost::noncopyable>("I3Tray")
-    .def("Execute", Execute_0)
-    .def("Execute", Execute_1)
+    .def("Execute", &Execute)
+    .def("Execute", &ExecuteN)
     .def("Usage", &I3Tray::Usage)
     .def("Finish", &I3Tray::Finish)
     .def("TrayInfo", &I3Tray::TrayInfo)

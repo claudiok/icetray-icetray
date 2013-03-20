@@ -32,6 +32,7 @@
 #include <icetray/I3Frame.h>
 #include <icetray/I3Configuration.h>
 #include <icetray/I3PhysicsUsage.h>
+#include <icetray/python/gil_holder.hpp>
 #include <boost/type_traits/is_const.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/python/object.hpp>
@@ -278,6 +279,7 @@ public:
         value = context_.Get<T>(context_name);
         // NB: we got here by catching an error thrown by boost::python::extract().
         // All subsequent calls will fail unless we clean it up.
+        boost::python::detail::gil_holder lock;
         PyErr_Clear();
       } catch (...) {
         log_error("Error in %s module '%s', getting parameter '%s'",

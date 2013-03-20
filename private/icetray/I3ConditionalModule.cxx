@@ -24,7 +24,7 @@
 
 #include "icetray/I3Context.h"
 #include "icetray/impl.h"
-
+#include "icetray/python/gil_holder.hpp"
 
 
 I3ConditionalModule::I3ConditionalModule(const I3Context& context) :
@@ -60,6 +60,7 @@ void I3ConditionalModule::Configure_()
   if (if_.ptr() != configured_if_.ptr()) // user set the parameter to something
     {
       i3_log("user passed us something");
+      boost::python::detail::gil_holder lock;
       if (!PyCallable_Check(configured_if_.ptr()))
 	log_fatal("'If' parameter to module %s must be a callable object", GetName().c_str());
       else
@@ -71,8 +72,6 @@ void I3ConditionalModule::Configure_()
     }
   else // got nothing from user
     use_if_ = false;
-
-  boost::python::object obj;
 
   i3_log("(%s) Configuring the Conditional Module stuff.",GetName().c_str());
   GetParameter("IcePickServiceKey",pickKey_);
@@ -106,6 +105,7 @@ bool I3ConditionalModule::ShouldDoProcess(I3FramePtr frame)
   i3_log("use_if_=%d", use_if_);
   if (use_if_)
     {
+      boost::python::detail::gil_holder lock;
       boost::python::object rv = if_(frame);
       bool flag = boost::python::extract<bool>(rv);
       if (flag)

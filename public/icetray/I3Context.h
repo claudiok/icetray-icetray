@@ -29,6 +29,7 @@
 #include <icetray/IcetrayFwd.h>
 #include <icetray/I3Logging.h>
 #include <icetray/I3DefaultName.h>
+#include <icetray/python/gil_holder.hpp>
 
 #include <icetray/is_shared_ptr.h>
 #include <I3/name_of.h>
@@ -75,6 +76,7 @@ class I3Context
     try {
         boost::python::object obj;
         obj = boost::any_cast<boost::python::object>(iter->second);
+        boost::python::detail::gil_holder lock;
         return boost::python::extract<shared_ptr<Service> >(obj).check();
     } catch (const boost::bad_any_cast& e) {
         return boost::any_cast<shared_ptr<Service> >(&(iter->second));
@@ -98,6 +100,7 @@ class I3Context
     try {
         boost::python::object obj;
         obj = boost::any_cast<boost::python::object>(iter->second);
+        boost::python::detail::gil_holder lock;
         return boost::python::extract<Service>(obj).check();
     } catch (const boost::bad_any_cast& e) {
         return boost::any_cast<Service>(&(iter->second));
@@ -127,6 +130,7 @@ class I3Context
   {
     if (map_.find(where) != map_.end())
       log_fatal("context already contains object named %s", where.c_str());
+    boost::python::detail::gil_holder lock;
     try {
       map_[where] = boost::python::object(what);
     } catch (const boost::python::error_already_set &e) {
@@ -150,6 +154,7 @@ class I3Context
   {
     if (map_.find(where) != map_.end())
       log_fatal("context already contains object named %s", where.c_str());
+    boost::python::detail::gil_holder lock;
     map_[where] = what;
     return true;
   }
@@ -165,6 +170,7 @@ class I3Context
     if (iter == map_.end())
       log_fatal("context contains nothing at slot %s", where.c_str());
     shared_ptr<T> sp_t;
+    boost::python::detail::gil_holder lock;
     boost::python::object obj;
     try {
       obj = boost::any_cast<boost::python::object>(iter->second);
@@ -203,6 +209,7 @@ class I3Context
 	return T();
       }
     T sp_t;
+    boost::python::detail::gil_holder lock;
     boost::python::object obj;
     try {
       obj = boost::any_cast<boost::python::object>(iter->second);
@@ -230,6 +237,7 @@ class I3Context
 	log_trace("context contains nothing at slot %s", where.c_str());
 	return boost::python::object();
     }
+    boost::python::detail::gil_holder lock;
     try {
       return boost::any_cast<boost::python::object>(iter->second);
     } catch (const boost::bad_any_cast& e) {

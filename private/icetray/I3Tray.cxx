@@ -42,6 +42,7 @@
 #include <icetray/I3Frame.h>
 #include <icetray/I3PhysicsUsage.h>
 #include <icetray/serialization.h>
+#include <icetray/python/gil_holder.hpp>
 
 #include "PythonFunction.h"
 
@@ -310,6 +311,7 @@ I3Tray::ConnectBoxes(const std::string& fromModule,
 void 
 I3Tray::Configure()
 {
+	boost::python::detail::gil_holder lock;
 	if (configure_called)
 		return;
 	if (modules_in_order.size() == 0)
@@ -437,6 +439,7 @@ I3Tray::Configure()
 void
 I3Tray::Execute()
 {
+	// boost::python::detail::gil_releaser unlock;
 	if (execute_called) {
 		log_error("This I3Tray has already been executed. "
 		    "Ignoring second call to Execute()");
@@ -461,6 +464,7 @@ I3Tray::Execute()
 void
 I3Tray::Execute(unsigned maxCount)
 {
+	// boost::python::detail::gil_releaser unlock;
 	if (execute_called) {
 		log_error("This I3Tray has already been executed. "
 		    "Ignoring second call to Execute()");

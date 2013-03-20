@@ -29,6 +29,7 @@
 #include <icetray/OMKey.h>
 #include <icetray/PythonModule.h>
 #include <icetray/impl.h>
+#include <icetray/python/gil_holder.hpp>
 #include <boost/python/import.hpp>
 
 namespace bp = boost::python;
@@ -63,6 +64,7 @@ template <typename Base>
 void 
 PythonModule<Base>::Configure()
 {
+  boost::python::detail::gil_holder lock;
   i3_log("%s", __PRETTY_FUNCTION__);
   if (bp::override conf = this->get_override("Configure"))
     conf();
@@ -81,6 +83,7 @@ template <typename Base>
 void 
 PythonModule<Base>::Process()
 {
+  boost::python::detail::gil_holder lock;
   i3_log("%s", __PRETTY_FUNCTION__);
   if (bp::override process = this->get_override("Process"))
     {
@@ -105,6 +108,7 @@ template <typename Base>
 void 
 PythonModule<Base>::Finish()
 {
+  boost::python::detail::gil_holder lock;
   i3_log("%s", __PRETTY_FUNCTION__);
   if (bp::override fin = this->get_override("Finish"))
     fin();
@@ -149,6 +153,7 @@ template <typename Base>
 bool
 PythonModule<Base>::ShouldDoGeometry(I3FramePtr frame)
 {
+  boost::python::detail::gil_holder lock;
   i3_log("%s", __PRETTY_FUNCTION__);
   if (bp::override sd = this->get_override("ShouldDoGeometry"))
     return sd(frame);
@@ -160,6 +165,7 @@ template <typename Base>
 void 
 PythonModule<Base>::Geometry(I3FramePtr frame)
 {
+  boost::python::detail::gil_holder lock;
   i3_log("%s", __PRETTY_FUNCTION__);
   if (bp::override g = this->get_override("Geometry"))
     g(frame);
@@ -171,6 +177,7 @@ template <typename Base>
 bool
 PythonModule<Base>::ShouldDoCalibration(I3FramePtr frame)
 {
+  boost::python::detail::gil_holder lock;
   i3_log("%s", __PRETTY_FUNCTION__);
   if (bp::override sd = this->get_override("ShouldDoCalibration"))
     return sd(frame);
@@ -182,6 +189,7 @@ template <typename Base>
 void 
 PythonModule<Base>::Calibration(I3FramePtr frame)
 {
+  boost::python::detail::gil_holder lock;
   i3_log("%s", __PRETTY_FUNCTION__);
   if (bp::override cal = this->get_override("Calibration"))
     cal(frame);
@@ -193,6 +201,7 @@ template <typename Base>
 bool
 PythonModule<Base>::ShouldDoDAQ(I3FramePtr frame)
 {
+  boost::python::detail::gil_holder lock;
   i3_log("%s", __PRETTY_FUNCTION__);
   if (bp::override sd = this->get_override("ShouldDoDAQ"))
     return sd(frame);
@@ -204,6 +213,7 @@ template <typename Base>
 void 
 PythonModule<Base>::DAQ(I3FramePtr frame)
 {
+  boost::python::detail::gil_holder lock;
   i3_log("%s", __PRETTY_FUNCTION__);
   if (bp::override ds = this->get_override("DAQ"))
     ds(frame);
@@ -215,6 +225,7 @@ template <typename Base>
 bool
 PythonModule<Base>::ShouldDoDetectorStatus(I3FramePtr frame)
 {
+  boost::python::detail::gil_holder lock;
   i3_log("%s", __PRETTY_FUNCTION__);
   if (bp::override sd = this->get_override("ShouldDoDetectorStatus"))
     return sd(frame);
@@ -226,6 +237,7 @@ template <typename Base>
 void 
 PythonModule<Base>::DetectorStatus(I3FramePtr frame)
 {
+  boost::python::detail::gil_holder lock;
   i3_log("%s", __PRETTY_FUNCTION__);
   if (bp::override ds = this->get_override("DetectorStatus"))
     ds(frame);
@@ -237,6 +249,7 @@ template <typename Base>
 bool
 PythonModule<Base>::ShouldDoPhysics(I3FramePtr frame)
 {
+  boost::python::detail::gil_holder lock;
   i3_log("%s", __PRETTY_FUNCTION__);
   if (bp::override sd = this->get_override("ShouldDoPhysics"))
     return sd(frame);
@@ -248,6 +261,7 @@ template <typename Base>
 void 
 PythonModule<Base>::Physics(I3FramePtr frame)
 {
+  boost::python::detail::gil_holder lock;
   i3_log("%s", __PRETTY_FUNCTION__);
   if (bp::override phys = this->get_override("Physics"))
     phys(frame);
@@ -294,6 +308,7 @@ template <>
 void 
 PythonModule<I3PacketModule>::FramePacket(std::vector<I3FramePtr> &frames)
 {
+  boost::python::detail::gil_holder lock;
   i3_log("%s", __PRETTY_FUNCTION__);
   if (bp::override pkt = this->get_override("FramePacket"))
     pkt(frames);

@@ -20,6 +20,18 @@ public:
 	}
 private:
 	PyGILState_STATE gil_state;
+};
+
+class gil_releaser {
+public:
+	inline gil_releaser() {
+		thread_state = PyEval_SaveThread();
+	}
+	inline ~gil_releaser() {
+		PyEval_RestoreThread(thread_state);
+	}
+private:
+	PyThreadState *thread_state;
 };    
 
 }}}

@@ -119,6 +119,7 @@ class I3ServiceBase {
                     // NB: we got here by catching an error thrown by
                     // boost::python::extract(). All subsequent calls will fail
                     // unless we clean it up.
+                    boost::python::detail::gil_holder lock;
                     PyErr_Clear();
                 } catch (...) {
                     log_error("Error in %s module '%s', getting parameter '%s'",

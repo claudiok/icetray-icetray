@@ -18,6 +18,7 @@
  */
 
 #include "PythonFunction.h"
+#include "icetray/python/gil_holder.hpp"
 
 using namespace std;
 namespace bp = boost::python;
@@ -150,6 +151,7 @@ void PythonFunction::Process()
       return;
     }
   i3_log("process!");
+  boost::python::detail::gil_holder lock;
   bp::object rawfn = raw_function(obj);
   bp::tuple tupleargs = bp::make_tuple(frame);
   bp::object rv;

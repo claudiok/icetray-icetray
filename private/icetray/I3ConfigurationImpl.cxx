@@ -23,6 +23,7 @@
 #include <icetray/I3ConfigurationImpl.h>
 #include <I3/name_of.h>
 #include <icetray/serialization.h>
+#include <icetray/python/gil_holder.hpp>
 
 #include <icetray/I3Parameter.h>
 #include <icetray/Utility.h>
@@ -174,7 +175,8 @@ I3ConfigurationImpl::serialize(Archive &ar, unsigned version)
   // in the wild, though.
   if (version < 2)
     throw boost::archive::archive_exception(boost::archive::archive_exception::unsupported_version);
-
+  
+  boost::python::detail::gil_holder lock;
   // for parameters_t, use the portable save/load above
   ar & make_nvp("parameters", parameters); 
   if (version == 2) {
