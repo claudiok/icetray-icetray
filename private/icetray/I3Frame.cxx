@@ -561,10 +561,10 @@ bool I3Frame::load(IStreamT& is, const vector<string>& skip)
 
     if (versionRead == 4)
       return load_v4(is, skip);
-    if (versionRead == 5)
-      return load_v5(is, skip);
+    if (versionRead == 5 || versionRead == 6)
+      return load_v5(is, skip, versionRead == 5);
     else
-      log_fatal("Frame is version %u, this software can read only up to version 5", versionRead);
+      log_fatal("Frame is version %u, this software can read only up to version 6", versionRead);
   }
 }
 
@@ -574,7 +574,7 @@ bool I3Frame::load(IStreamT& is, const vector<string>& skip)
 //
 //
 template <typename IStreamT>
-bool I3Frame::load_v5(IStreamT& is, const vector<string>& skip)
+bool I3Frame::load_v5(IStreamT& is, const vector<string>& skip, bool calc_crc)
 {
   if (!is.good())
     log_fatal("attempt to read from stream in error state");
@@ -582,7 +582,8 @@ bool I3Frame::load_v5(IStreamT& is, const vector<string>& skip)
   i3frame_checksum_t checksumRead;
 
   crc_t crc;
-  bool calc_crc = (skip.size() == 0);
+  if (calc_crc)
+    calc_crc = (skip.size() == 0);
 
   // read size of the entire (serialized) frame
   // read checksum plus entire frame and process/test checksum
