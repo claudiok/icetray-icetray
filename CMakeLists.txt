@@ -102,7 +102,8 @@ i3_add_library(icetray
   private/icetray/I3Bool.cxx
   private/icetray/I3PhysicsTimer.cxx     
   private/icetray/I3PhysicsUsage.cxx     
-  private/icetray/I3PrintfLogger.cxx     
+  private/icetray/I3PrintfLogger.cxx
+  private/icetray/I3SyslogLogger.cxx
   private/icetray/Utility.cxx
   private/icetray/I3ServiceFactory.cxx   
   private/icetray/I3TrayInfo.cxx               
@@ -190,7 +191,6 @@ i3_test_executable(test
   private/test/NonUniqueNameTest.cxx        
   private/test/shared-ptr-constness.cxx
   private/test/I3FrameTest.cxx         
-  private/test/OutOfMemoryModuleTest.cxx            
   private/test/test-throws-not-caught.cxx
   private/test/PhysicsBuffering.cxx         
   private/test/typesizes.cxx

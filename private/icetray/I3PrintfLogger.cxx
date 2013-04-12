@@ -7,7 +7,7 @@
 #include <icetray/I3SimpleLoggers.h>
 
 I3PrintfLogger::I3PrintfLogger(I3LogLevel level)
-    : I3Logger(level)
+    : I3Logger(level), TrimFileNames(true)
 {
 	tty_ = isatty(STDERR_FILENO);
 }
@@ -30,24 +30,27 @@ I3PrintfLogger::Log(I3LogLevel level, const std::string &unit,
 	}
 
 	switch (level) {
-	case LOG_TRACE:
+	case I3LOG_TRACE:
 		log_description = "TRACE";
 		break;
-	case LOG_DEBUG:
+	case I3LOG_DEBUG:
 		log_description = "DEBUG";
 		break;
-	case LOG_INFO:
+	case I3LOG_INFO:
 		log_description = "INFO";
 		break;
-	case LOG_WARN:
+        case I3LOG_NOTICE:
+                log_description = "NOTICE";
+                break;
+	case I3LOG_WARN:
 		log_description = "WARN";
 		break;
-	case LOG_ERROR:
+	case I3LOG_ERROR:
 		log_description = "ERROR";
 		if (tty_)
 			log_prolog = "\x1b[1;31m";
 		break;
-	case LOG_FATAL:
+	case I3LOG_FATAL:
 		log_description = "FATAL";
 		if (tty_)
 			log_prolog = "\x1b[1;31m";
@@ -59,7 +62,7 @@ I3PrintfLogger::Log(I3LogLevel level, const std::string &unit,
 
 	std::string trimmed_filename;
 	size_t lastslash = file.rfind('/');
-	if (lastslash != std::string::npos)
+	if (lastslash != std::string::npos && TrimFileNames)
 		trimmed_filename = file.substr(lastslash+1);
 	else
 		trimmed_filename = file;
