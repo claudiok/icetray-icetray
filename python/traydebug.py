@@ -15,7 +15,7 @@ import re
 import math
 import cgi
 
-from . import i3inspect
+from icecube.icetray import i3inspect
 
 from jinja2 import Template
 
