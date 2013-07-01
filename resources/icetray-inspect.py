@@ -143,7 +143,7 @@ def display_config(mod, category, modname=None):
 			
 		try:
 			config = i3inspect.get_configuration(mod)
-		except RuntimeError, e:
+		except RuntimeError as e:
 			sys.stderr.write("Error constructing '%s': %s" % (mod, e))
 			return False
 			
@@ -206,7 +206,7 @@ for project in args:
 			icetray.load(project, False)
 			py_modules = []
 			traysegments = []
-		except RuntimeError, e:
+		except RuntimeError as e:
 			sys.stderr.write("Ignoring '%s': %s" % (project, e))
 			continue
 		
