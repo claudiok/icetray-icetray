@@ -214,8 +214,6 @@ public:
   /**
    * Requests that the Framework change from the current 'Processing'
    * state to a "Suspened' state.
-   *
-   * Currently unused.
    */
   void RequestSuspension() const;
 
@@ -296,7 +294,7 @@ public:
   }
 
   template<typename T>
-  T GetService(const std::string &where = I3DefaultName<typename T::value_type>::value(), 
+  T GetService(const std::string &where = I3DefaultName<typename T::element_type>::value(), 
      typename boost::enable_if<is_shared_ptr<T>, bool>::type* enabler = 0)
   {
     return context_.Get<T>(where);

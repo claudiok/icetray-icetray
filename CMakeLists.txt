@@ -112,10 +112,11 @@ i3_add_library(icetray
   private/icetray/I3PacketModule.cxx  
   private/icetray/serialization.cxx  
   ${I3_BACKTRACE_CXX}
-  private/icetray/init.cxx        
-  private/icetray/PythonFunction.cxx           
-  private/icetray/PythonModule.cxx             
-  private/icetray/name_of.cxx 
+  private/icetray/init.cxx
+  private/icetray/PythonFunction.cxx
+  private/icetray/FunctionModule.cxx
+  private/icetray/PythonModule.cxx
+  private/icetray/name_of.cxx
 
   #
   #  Modules:  testing and example
@@ -229,6 +230,5 @@ add_subdirectory(private/pybindings)
 add_subdirectory(private/test-pybindings)
 
 # Install icetray-inspect
-exec_program(ln ARGS -snf ${CMAKE_SOURCE_DIR}/icetray/resources/icetray-inspect.py ${EXECUTABLE_OUTPUT_PATH}/icetray-inspect
-    OUTPUT_VARIABLE DEV_NULL)
+i3_executable_script(inspect resources/icetray-inspect.py)
 

@@ -8,27 +8,28 @@ tray = I3Tray()
 
 tray.AddModule("BottomlessSource", "bs")
 
-def f1(frame, x='x', y='y'):
-    assert x == 'x'
-    assert y == 'y'
+# no If
+def f1(frame):
+    pass
     
 tray.AddModule(f1, 'f1')
 
-def f2(frame, x='x', y='y'):
-    print("f2: %s %s" % (x, y))
-    assert x == 'configured'
-    assert y == 'y'
+# a basic If
+def f2(frame):
+    pass
     
 tray.AddModule(f2, 'f2',
-               x = 'configured')
+               If = lambda fr:True)
 
+# some other args and an If
 def f3(frame, x='x', y='y'):
     assert x == 'configured'
     assert y == 'configured'
     
 tray.AddModule(f3, 'f3',
                x = 'configured',
-               y = 'configured')
+               y = 'configured',
+               If = lambda fr:True)
 
 tray.AddModule("TrashCan", "tc")
 

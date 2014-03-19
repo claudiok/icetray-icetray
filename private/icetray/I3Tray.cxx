@@ -31,8 +31,7 @@
 
 #include <boost/python.hpp>
 #include <boost/foreach.hpp>
-
-#include "PythonFunction.h"
+#include <boost/make_shared.hpp>
 
 #include <icetray/I3Tray.h>
 #include <icetray/I3TrayInfoService.h>
@@ -44,17 +43,18 @@
 #include <icetray/serialization.h>
 
 #include "PythonFunction.h"
+#include "FunctionModule.h"
 
 using namespace std;
 
-volatile sig_atomic_t I3Tray::suspension_requested_;
+volatile sig_atomic_t I3Tray::global_suspension_requested;
 
 namespace bp = boost::python;
 
 void
 I3Tray::set_suspend_flag(int sig)
 {
-	suspension_requested_ = 1;
+	global_suspension_requested = 1;
 
 	if (sig == SIGINT) {
 		std::cerr << "\n***\n*** SIGINT received. "
@@ -100,10 +100,13 @@ I3Tray::report_usage(int sig)
 	}
 }
 
+void noOpDeleter(I3Tray*){}
+
 I3Tray::I3Tray() :
     boxes_connected(false), configure_called(false), finish_called(false),
-    execute_called(false)
+    execute_called(false), suspension_requested(false)
 {
+	master_context.Put(boost::shared_ptr<I3Tray>(this,noOpDeleter),"I3Tray");
 	// Note that the following is deeply unsafe, but necessary for
 	// tray info service for now
 	master_context.Put(boost::shared_ptr<I3TrayInfoService>(new
@@ -115,7 +118,7 @@ I3Tray::~I3Tray()
 	if (!finish_called && execute_called)
 		Finish();
 
-	suspension_requested_ = false;
+	global_suspension_requested = false;
 }
 
 void
@@ -124,13 +127,15 @@ I3Tray::Abort()
 }
 
 I3Tray::param_setter
-I3Tray::AddModule(const std::string& classname, const std::string& instancename)
+I3Tray::AddModule(const std::string& classname, std::string instancename)
 {
+	if(instancename.empty())
+		instancename=CreateName(classname, "Module", modules_in_order);
 	return AddModule(bp::object(classname), instancename);
 }
 
 I3Tray::param_setter
-I3Tray::AddModule(bp::object obj, const std::string& instancename)
+I3Tray::AddModule(bp::object obj, std::string instancename)
 {
 	if (configure_called)
 		log_fatal("I3Tray::Configure() already called -- "
@@ -144,6 +149,8 @@ I3Tray::AddModule(bp::object obj, const std::string& instancename)
 	if (bp::extract<std::string>(obj).check()) {
 		// obj is a string... construct C++ module from factory
 		std::string name = bp::extract<std::string>(obj);
+		if (instancename.empty())
+			instancename=CreateName(name,"Module",modules_in_order);
 		module =
 		    I3::Singleton<I3ModuleFactory>::get_const_instance()
 		    .Create(name)(master_context);
@@ -154,6 +161,8 @@ I3Tray::AddModule(bp::object obj, const std::string& instancename)
 		module = bp::extract<I3ModulePtr>(instance);
 		std::string pyname =
 		    boost::python::extract<std::string>(obj.attr("__name__"));
+		if (instancename.empty())
+			instancename=CreateName(pyname,"Module",modules_in_order);
 #if PY_MAJOR_VERSION >= 2 && PY_MINOR_VERSION > 4
 		std::string pymod = boost::python::extract<std::string>(
 		    obj.attr("__module__"));
@@ -178,6 +187,8 @@ I3Tray::AddModule(bp::object obj, const std::string& instancename)
 		std::string repr = boost::python::extract<std::string>(
 		    obj.attr("__repr__")());
 		module->configuration_.ClassName(repr);
+		if (instancename.empty())
+			instancename=CreateName(repr,"Module",modules_in_order);
 	} else {
 		log_fatal("'%s%s' passed to AddModule with instance name %s. "
 		   "Must be a string, a python function, or a python I3Module.",
@@ -197,11 +208,15 @@ I3Tray::AddModule(bp::object obj, const std::string& instancename)
 }
 
 I3Tray::param_setter
-I3Tray::AddModule(I3ModulePtr module, const std::string& instancename)
+I3Tray::AddModule(I3ModulePtr module, std::string instancename)
 {
 	if (configure_called)
 		log_fatal("I3Tray::Configure() already called -- "
 		    "cannot add new modules");
+	module->configuration_.ClassName(I3::name_of(typeid(*module)));
+	if (instancename.empty())
+		instancename=CreateName(module->configuration_.ClassName(),"Module",
+		                        modules_in_order);
 	if (modules.find(instancename) != modules.end())
 		log_fatal("Tray already contains module named \"%s\" of "
 		    "type %s", instancename.c_str(),
@@ -209,7 +224,6 @@ I3Tray::AddModule(I3ModulePtr module, const std::string& instancename)
 
 	log_trace("%s : %s", __PRETTY_FUNCTION__, instancename.c_str());
 
-	module->configuration_.ClassName(I3::name_of(typeid(*module)));
 	module->configuration_.InstanceName(instancename);
 	module->SetName(instancename);
 	modules[instancename] = module;
@@ -220,11 +234,14 @@ I3Tray::AddModule(I3ModulePtr module, const std::string& instancename)
 
 I3Tray::param_setter
 I3Tray::AddService(const std::string& classname,
-    const std::string& instancename)
+    std::string instancename)
 { 
 	if (configure_called)
 		log_fatal("I3Tray::Configure() already called -- "
 		    "cannot add new services");
+
+	if (instancename.empty())
+		instancename=CreateName(classname,"Service",factories_in_order);
 
 	if (factories.find(instancename) != factories.end())
 		log_fatal("More than one service added with the name '%s'",
@@ -454,7 +471,7 @@ I3Tray::Execute()
 
 	Configure();
 
-	while (!suspension_requested_) {
+	while (!suspension_requested && !global_suspension_requested) {
 		log_trace("icetray dispatching Process_");
 		driving_module->Do(&I3Module::Process_);
 	}
@@ -478,7 +495,7 @@ I3Tray::Execute(unsigned maxCount)
 
 	Configure();
 
-	for (unsigned i=0; i < maxCount && !suspension_requested_; i++) {
+	for (unsigned i=0; i < maxCount && !suspension_requested && !global_suspension_requested; i++) {
 		log_trace("%u/%u icetray dispatching Process_", i, maxCount);
 		driving_module->Do(&I3Module::Process_);
 	}
@@ -574,5 +591,40 @@ I3Tray::SetParameter(const string& module, const string& parameter,
 	    module.c_str(), parameter.c_str(), value_as_string.c_str());
 
 	return true;
+}
+
+//The behavior of this function should be kept the same
+//as the python I3Tray's _createName
+std::string
+I3Tray::CreateName(const std::string& type, const string& kind,
+                   const std::vector<std::string>& existingNames){
+	std::string name;
+	unsigned int i=0;
+	while(true){
+		std::ostringstream ss;
+		ss << type << '_' << std::setfill('0') << std::setw(4) << i;
+		name=ss.str();
+		if(std::find(existingNames.begin(),existingNames.end(),name)
+		   == existingNames.end())
+			break;
+		i++;
+	}
+	log_info_stream("Adding Anonymous " << kind << " of type '"
+	                << type << "' with name '" << name << "'");
+	return(name);
+}
+
+template<>
+I3Tray::param_setter
+I3Tray::AddFunctionModule<void>(boost::function<void(boost::shared_ptr<I3Frame>)> func,
+                                const std::string& instancename){
+	return AddModule(boost::make_shared<FunctionModule>(master_context,func));
+}
+
+template<>
+I3Tray::param_setter
+I3Tray::AddFunctionModule<bool>(boost::function<bool(boost::shared_ptr<I3Frame>)> func,
+                                const std::string& instancename){
+	return AddModule(boost::make_shared<FunctionModule>(master_context,func));
 }
 
