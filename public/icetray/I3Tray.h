@@ -296,6 +296,7 @@ private:
 
   bool boxes_connected;
   bool configure_called;
+  bool finish_called;
   bool execute_called;
   bool suspension_requested;
 
