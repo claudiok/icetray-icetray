@@ -163,7 +163,7 @@ class I3Tray(icetray.I3Tray):
     		print "%40s: %6u calls to physics %9.2fs user %9.2fs system" % (k, pusage.ncall, pusage.usertime, pusage.systime)
     
     		acc_time += pusage.systime + pusage.usertime
-    		if acc_time/total_time > fraction:
+    		if total_time and acc_time/total_time > fraction:
     			break
     	print '-'*99
 
