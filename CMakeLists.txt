@@ -74,6 +74,7 @@ set(ICETRAY_PYTHON_SRC
   private/pybindings/I3FrameMixing.cxx
   private/pybindings/I3TrayInfo.cxx
   private/pybindings/MyService.cxx
+  private/pybindings/Memory.cxx
   private/pybindings/std_cont_pod/std_cont_pod_char.cxx
   private/pybindings/std_cont_pod/std_cont_pod_double.cxx
   private/pybindings/std_cont_pod/std_cont_pod_I3Frame_Stream.cxx
@@ -132,6 +133,7 @@ i3_add_library(icetray
   private/icetray/FunctionModule.cxx
   private/icetray/PythonModule.cxx
   private/icetray/name_of.cxx
+  private/icetray/memory.cxx
 
   #
   #  Modules:  testing and example
