@@ -6,6 +6,9 @@
 #include <string>
 #include <new>
 
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/lock_guard.hpp>
+
 #include "memory.h"
 
 namespace {
@@ -54,8 +57,11 @@ namespace memory_map {
         MemoryMap();
         ~MemoryMap();
 
-        // perform lookup/insertion
-        size_t& operator[](const char*);
+        // add memory
+        void add(const char*, size_t);
+
+        // subtract memory
+        void subtract(const char*, size_t);
 
         // export to a regular map
         std::map<std::string, size_t> get_extents();
@@ -66,9 +72,12 @@ namespace memory_map {
          */
         Bucket* buckets;
         size_t num_buckets;
+        boost::mutex lock;
 
+        // resize the map - not thread-safe
         void resize_buckets(size_t new_size);
 
+        // find a bucket - not thread-safe
         Bucket& find_bucket(const char*);
 
     };
@@ -92,17 +101,28 @@ namespace memory_map {
         free(buckets);
     }
 
-    size_t&
-    MemoryMap::operator[](const char* str)
+    void
+    MemoryMap::add(const char* str, size_t s)
     {
+        boost::lock_guard<boost::mutex> guard(lock);
         Bucket& b = find_bucket(str);
         if (b.key == NULL)
         {
             // handle the case of the new bucket
             b.key = strdup(str);
-            b.value = 0;
+            b.value = s;
         }
-        return b.value;
+        else
+            b.value += s;
+    }
+
+    void
+    MemoryMap::subtract(const char* str, size_t s)
+    {
+        boost::lock_guard<boost::mutex> guard(lock);
+        Bucket& b = find_bucket(str);
+        assert(b.key != NULL);
+        b.value -= s;
     }
 
     std::map<std::string,size_t>
@@ -110,6 +130,7 @@ namespace memory_map {
     {
         std::string s;
         std::map<std::string,size_t> ret;
+        boost::lock_guard<boost::mutex> guard(lock);
 
         for (size_t i=0;i<num_buckets;i++)
         {
@@ -166,6 +187,7 @@ namespace memory_map {
     {
         size_t hash = djb2_hash(str)%num_buckets;
         size_t orig_hash = hash;
+
         while(buckets[hash].key != NULL &&
               strncmp(str,buckets[hash].key,MAX_STRING_LENGTH) != 0)
         {
@@ -180,6 +202,7 @@ namespace memory_map {
                 orig_hash = hash = djb2_hash(str)%num_buckets;
             }
         }
+
         return buckets[hash];
     }
 } // namespace memory_map
@@ -250,10 +273,10 @@ namespace pointer_map {
         PointerBucket** buckets;
         size_t num_buckets;
         int64_t allocs_since_resize;
+        boost::mutex lock;
 
+        // resize the map - not thread safe
         void resize_buckets(size_t new_size);
-
-        PointerBucket& find_bucket(const char*);
     };
 
     // public methods
@@ -288,6 +311,8 @@ namespace pointer_map {
     {
         size_t hash = pointer_hash(k)%num_buckets;
         PointerBucket* b = (PointerBucket*)malloc(sizeof(PointerBucket));
+        boost::lock_guard<boost::mutex> guard(lock);
+
         b->next = buckets[hash];
         b->key = const_cast<void*>(k);
         b->value = data;
@@ -302,6 +327,8 @@ namespace pointer_map {
     {
         size_t hash = pointer_hash(k)%num_buckets;
         MemData ret;
+        boost::lock_guard<boost::mutex> guard(lock);
+
         PointerBucket* b = buckets[hash];
         if (b == NULL)
         {
@@ -402,7 +429,7 @@ namespace memory {
         pointers.push(p,d);
 
         // update tracking data
-        tracking_data[default_label] += size;
+        tracking_data.add(default_label, size);
 
         return p;
     }
@@ -416,9 +443,7 @@ namespace memory {
         // get pointer data
         pointer_map::MemData d = pointers.pop(p);
         if (d.str != NULL)
-        {
-            tracking_data[d.str] -= d.size;
-        }
+            tracking_data.subtract(d.str, d.size);
 
         // free the memory
         free(p);
