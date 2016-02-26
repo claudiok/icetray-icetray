@@ -2,25 +2,25 @@
 #  Copyright (C) 2007-2009
 #  Troy D. Straszheim  <troy@icecube.umd.edu>
 #  and the IceCube Collaboration <http://www.icecube.wisc.edu>
-#  
+#
 #  This file is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>
-#  
+#
 #
 
-# 
+#
 #  Check for dcap
-#  
+#
 find_library(DCAP_LIBRARIES dcap HINTS ${DCAP_INSTALL_PREFIX}/lib ${DCAP_INSTALL_PREFIX}/lib64)
 find_file(FIND_DCAP_H dcap.h HINTS ${DCAP_INSTALL_PREFIX}/include)
 
@@ -32,8 +32,8 @@ if (DCAP_LIBRARIES AND DCAP_INCLUDE_DIR)
   include_directories(${DCAP_INCLUDE_DIR})
 else()
   colormsg(CYAN "+-- libdcap *not* found, omitting optional dcap support")
-  set(DCAP_LIBRARIES "")  
-endif()  
+  set(DCAP_LIBRARIES "")
+endif()
 
 # Check for libarchive
 
@@ -96,37 +96,37 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
 endif (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
 
 i3_add_library(icetray
-  private/icetray/I3Frame.cxx 
-  private/icetray/I3FrameMixing.cxx 
+  private/icetray/I3Frame.cxx
+  private/icetray/I3FrameMixing.cxx
   private/icetray/crc-ccitt.c
   private/icetray/crc32.c
   private/icetray/open.cxx
   private/icetray/load_project.cxx
-  private/icetray/I3FrameObject.cxx      
-  private/icetray/I3Logging.cxx        
+  private/icetray/I3FrameObject.cxx
+  private/icetray/I3Logging.cxx
   private/icetray/I3Configuration.cxx
   private/icetray/I3ConfigurationImpl.cxx
   private/icetray/I3Deprecation.cxx
   private/icetray/I3Parameter.cxx
-  private/icetray/OMKey.cxx            
-  private/icetray/I3Tray.cxx           
-  private/icetray/I3Module.cxx         
-  private/icetray/I3ConditionalModule.cxx  
-  private/icetray/I3Context.cxx        
-  private/icetray/I3DSORegistry.cxx      
-  private/icetray/I3Int.cxx            
+  private/icetray/OMKey.cxx
+  private/icetray/I3Tray.cxx
+  private/icetray/I3Module.cxx
+  private/icetray/I3ConditionalModule.cxx
+  private/icetray/I3Context.cxx
+  private/icetray/I3DSORegistry.cxx
+  private/icetray/I3Int.cxx
   private/icetray/I3Bool.cxx
-  private/icetray/I3PhysicsTimer.cxx     
-  private/icetray/I3PhysicsUsage.cxx     
+  private/icetray/I3PhysicsTimer.cxx
+  private/icetray/I3PhysicsUsage.cxx
   private/icetray/I3PrintfLogger.cxx
   private/icetray/I3SyslogLogger.cxx
   private/icetray/Utility.cxx
-  private/icetray/I3ServiceFactory.cxx   
-  private/icetray/I3TrayInfo.cxx               
-  private/icetray/I3TrayInfoService.cxx  
-  private/icetray/I3IcePick.cxx        
-  private/icetray/I3PacketModule.cxx  
-  private/icetray/serialization.cxx  
+  private/icetray/I3ServiceFactory.cxx
+  private/icetray/I3TrayInfo.cxx
+  private/icetray/I3TrayInfoService.cxx
+  private/icetray/I3IcePick.cxx
+  private/icetray/I3PacketModule.cxx
+  private/icetray/serialization.cxx
   ${I3_BACKTRACE_CXX}
   private/icetray/init.cxx
   private/icetray/PythonFunction.cxx
@@ -138,23 +138,23 @@ i3_add_library(icetray
   #
   #  Modules:  testing and example
   #
-  private/modules/AddNulls.cxx           
+  private/modules/AddNulls.cxx
   private/modules/PhysicsBuffer.cxx
-  private/modules/BottomlessSource.cxx   
-  private/modules/ManyStreamsSource.cxx   
+  private/modules/BottomlessSource.cxx
+  private/modules/ManyStreamsSource.cxx
   private/modules/Rename.cxx
-  private/modules/CountFrames.cxx        
-  private/modules/CountObject.cxx        
+  private/modules/CountFrames.cxx
+  private/modules/CountObject.cxx
   private/modules/TrashCan.cxx
-  private/modules/Delete.cxx           
-  private/modules/Copy.cxx             
-  private/modules/Dump.cxx             
+  private/modules/Delete.cxx
+  private/modules/Copy.cxx
+  private/modules/Dump.cxx
   private/modules/Fork.cxx
-  private/modules/IntGenerator.cxx       
-  private/modules/Keep.cxx             
-  private/modules/DeleteUnregistered.cxx               
-  private/modules/Get.cxx              
-  private/modules/FrameCheck.cxx               
+  private/modules/IntGenerator.cxx
+  private/modules/Keep.cxx
+  private/modules/DeleteUnregistered.cxx
+  private/modules/Get.cxx
+  private/modules/FrameCheck.cxx
   private/modules/AllParametersModule.cxx
   private/modules/ContextFreeServiceTestModule.cxx
   private/modules/MaintainInitialValuesModule.cxx
@@ -174,6 +174,18 @@ set_source_files_properties(private/icetray/I3TrayInfoService.cxx
   PROPERTIES
   COMPILE_FLAGS "-include ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/workspace_config.h")
 
+#
+# Configure memory tracking
+#
+if ((${CMAKE_BUILD_TYPE} STREQUAL "DEBUG") AND (NOT DEFINED MEMORY_TRACKING))
+  set(MEMORY_TRACKING ON)
+endif ((${CMAKE_BUILD_TYPE} STREQUAL "DEBUG") AND (NOT DEFINED MEMORY_TRACKING))
+if (${MEMORY_TRACKING})
+  set_source_files_properties(private/icetray/memory.cxx
+    PROPERTIES
+    COMPILE_FLAGS "-DMEMORY_TRACKING")
+endif (${MEMORY_TRACKING})
+
 set_source_files_properties(${ICETRAY_PYTHON_SRC}
   PROPERTIES
   COMPILE_FLAGS -DI3_PYBINDINGS_MODULE)
@@ -181,43 +193,43 @@ set_source_files_properties(${ICETRAY_PYTHON_SRC}
 i3_test_executable(test
   private/test/I3BoolTest.cxx
   private/test/I3IntTest.cxx
-  private/test/CleanConstructorTest.cxx  
-  private/test/I3LoggingObjectFirst.cxx     
+  private/test/CleanConstructorTest.cxx
+  private/test/I3LoggingObjectFirst.cxx
   private/test/ServicesAtDestruction.cxx
-  private/test/ConfigureServiceTest.cxx  
-  private/test/I3LoggingTest.cxx                    
+  private/test/ConfigureServiceTest.cxx
+  private/test/I3LoggingTest.cxx
   private/test/SourceOrderTest.cxx
-  private/test/I3LoggingTest2.cxx                   
+  private/test/I3LoggingTest2.cxx
   private/test/TestModule.cxx
-  private/test/DefaultFrameNameTest.cxx  
+  private/test/DefaultFrameNameTest.cxx
   private/test/TestServiceFactory.cxx
   private/test/InstallService.cxx
-  private/test/EvensAndOdds.cxx        
-  private/test/I3PhysicsTimerTest.cxx       
+  private/test/EvensAndOdds.cxx
+  private/test/I3PhysicsTimerTest.cxx
   private/test/TestServiceFactoryModule.cxx
-  private/test/FailingModuleTest.cxx     
-  private/test/I3TrayTest.cxx               
+  private/test/FailingModuleTest.cxx
+  private/test/I3TrayTest.cxx
   private/test/Utility.cxx
   private/test/LexicalCasts.cxx
-  private/test/FrameAccess.cxx         
+  private/test/FrameAccess.cxx
   private/test/VectorParameters.cxx
-  private/test/FrameFlow.cxx           
-  private/test/ModuleGetService.cxx  
-  private/test/ModuleParameterConversions.cxx  
+  private/test/FrameFlow.cxx
+  private/test/ModuleGetService.cxx
+  private/test/ModuleParameterConversions.cxx
   private/test/main.cxx
-  private/test/I3ContextTest.cxx               
-  private/test/NonUniqueNameTest.cxx        
+  private/test/I3ContextTest.cxx
+  private/test/NonUniqueNameTest.cxx
   private/test/shared-ptr-constness.cxx
   private/test/I3FrameTest.cxx
   private/test/I3FrameMixing.cxx
   private/test/test-throws-not-caught.cxx
-  private/test/PhysicsBuffering.cxx         
+  private/test/PhysicsBuffering.cxx
   private/test/typesizes.cxx
   private/test/I3ConditionalModuleTest.cxx
   private/test/NoOutboxModule.cxx
   private/test/iostreams.cxx
   private/test/I3ModulePlumbing.cxx
- 
+
   USE_PROJECTS icetray)
 
 #i3_test_compile(main private/test/main.cxx)
@@ -247,11 +259,11 @@ i3_add_pybindings(icetray
   USE_PROJECTS icetray
   )
 
-# 
+#
 # This is special, goes in the toplevel 'lib' directory for
 # backwards compatibility
 #
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/private/pybindings/I3Tray.py 
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/private/pybindings/I3Tray.py
   DESTINATION lib)
 
 add_custom_command(OUTPUT ${TMP_LIBRARY_OUTPUT_PATH}/I3Tray.py

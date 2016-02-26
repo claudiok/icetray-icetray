@@ -477,6 +477,8 @@ namespace memory {
 
 // override the global new and delete operators
 
+#ifdef MEMORY_TRACKING
+
 void*
 operator new(size_t size)
 {
@@ -506,3 +508,5 @@ operator delete[](void* p) throw()
 {
     memory::free_override(p);
 }
+
+#endif
