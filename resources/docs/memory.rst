@@ -47,5 +47,8 @@ This will generate a graph of the top 10 memory consumers, saved to
 API Documentation
 -----------------
 
+.. autoclass:: icecube.icetray.memory
+   :members:
+
 .. automodule:: icecube.icetray.memory_util
    :members:

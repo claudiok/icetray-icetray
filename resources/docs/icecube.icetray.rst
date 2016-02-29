@@ -5,7 +5,7 @@
    :members:
    :undoc-members:
    :synopsis: icetray
-   :exclude-members: I3Frame
+   :exclude-members: I3Frame, memory
    
    .. autoclass:: icecube.icetray.I3Frame
       :members:

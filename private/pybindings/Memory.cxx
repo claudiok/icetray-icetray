@@ -1,6 +1,7 @@
 #include <map>
 #include <string>
 #include <boost/python.hpp>
+#include <boost/python/docstring_options.hpp>
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -101,10 +102,12 @@ namespace {
 
 struct Memory{};
 void register_Memory(){
+  boost::python::docstring_options doc_options;
+  doc_options.disable_cpp_signatures();
   boost::python::scope m = boost::python::class_<Memory>("memory")
-    .def("get_extents", &memory::get_extents )
+    .def("get_extents", &memory::get_extents, "Get a snapshot of memory extents")
     .staticmethod("get_extents")
-    .def("set_label", &memory::set_label )
+    .def("set_label", &memory::set_label, "Set the current memory label")
     .staticmethod("set_label")
     ;
 
