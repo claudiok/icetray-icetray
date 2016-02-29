@@ -53,5 +53,6 @@ Detailed Documentation:
    i3podholder
    I3Tray
    icecube.icetray
+   memory
 
 Also see the `doxygen <../../doxygen/icetray/index.html>`_ docs.
