@@ -3,6 +3,12 @@
 # $Date: $
 #
 
+March 30, 2015, Alex Olivas  (olivas@icecube.umd.edu)
+--------------------------------------------------------------------
+Release V15-03-01
+
+ - patch r2437 - Add OMKey::IsScintillator method.
+
 March 15, 2015, Alex Olivas  (olivas@icecube.umd.edu)
 --------------------------------------------------------------------
 Release V15-03-00
