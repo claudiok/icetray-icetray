@@ -18,7 +18,7 @@ def print_snapshot(snap):
     print('{:<40} | {:>10d}'.format('Total',total))
 
 
-def graph_timeline(timeline, filename, limit=10):
+def graph_timeline(timeline, filename, limit=10, exclude=None):
     """
     Graph a MemoryTimeline object
 
@@ -26,35 +26,49 @@ def graph_timeline(timeline, filename, limit=10):
         timeline (MemoryTimeline): The :class:`icecube.icetray.memory.MemoryTimeline` object.
         filename (str): A filename to write to.
         limit (int): Number of lines to display (from highest to lowest).
+        exclude (iterable): Iterable of names to exclude.
     """
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
 
+    if not exclude:
+        exclude = {}
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.set_ylabel('Memory (KB)')
+    ax.set_ylabel('Memory (MB)')
     ax.set_xlabel('Time (s)')
 
     series = {}
     for ts in timeline:
         t = float(ts.first)
         for k,v in ts.second.items():
+            if k in exclude:
+                continue
             if k not in series:
                 series[k] = {'t':[],'v':[]}
             series[k]['t'].append(t*1.0/1000000)
-            series[k]['v'].append(v*1.0/1000)
-    highest_series = sorted(series,key=lambda k:max(series[k]['v']),reverse=True)[:10]
+            series[k]['v'].append(v*1.0/1000000)
+    highest_series = sorted(series,key=lambda k:max(series[k]['v']),reverse=True)[:limit]
     
     max_mem = max(series[highest_series[0]]['v'])
     ax.set_ylim([0,int(max_mem*1.1)])
 
     for k in highest_series:
         ax.plot(series[k]['t'],series[k]['v'],label=k)
+    
+    # Shrink current axis's height by 20% on the bottom
+    #box = ax.get_position()
+    #ax.set_position([box.x0, box.y0 + box.height * 0.4,
+    #                 box.width, box.height * 0.6])
 
-    legend = ax.legend(loc='upper left')
+    # Put a legend below current axis
+    #lgd = ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
+    #                fancybox=False, shadow=False, ncol=1)
+    lgd = ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
-    plt.savefig(filename, dpi=300)
+    plt.savefig(filename, dpi=300, bbox_extra_artists=(lgd,), bbox_inches='tight')
 
 try:
     import tracemalloc

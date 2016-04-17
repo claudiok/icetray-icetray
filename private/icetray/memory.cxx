@@ -405,6 +405,7 @@ namespace memory {
 
     // default label
     char* default_label = NULL;
+    boost::mutex lock;
 
     // memory maps
     memory_map::MemoryMap tracking_data;
@@ -413,6 +414,8 @@ namespace memory {
     void*
     malloc_override(size_t size)
     {
+        boost::lock_guard<boost::mutex> guard(lock);
+
         // skip tracking if we've disabled it
         if (default_label == NULL)
             return malloc(size);
@@ -454,6 +457,7 @@ namespace memory {
     std::map<std::string, size_t>
     get_extents()
     {
+        boost::lock_guard<boost::mutex> guard(lock);
         // don't track us while we make the extent map
         char* old_label = default_label;
         default_label = NULL;
@@ -467,6 +471,7 @@ namespace memory {
     void
     set_label(std::string l)
     {
+        boost::lock_guard<boost::mutex> guard(lock);
         if (default_label != NULL)
             free(default_label);
         default_label = strdup(l.c_str());

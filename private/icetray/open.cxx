@@ -49,14 +49,6 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#ifdef ROOT_HAS_NETX
-#include <TXNetFile.h>
-#endif
-
-#ifdef I3_WITH_DCAP
-#include <dcap.h>
-#endif
-
 #ifdef I3_WITH_LIBARCHIVE
 #include <archive.h>
 #include <archive_entry.h>
@@ -91,95 +83,6 @@ namespace boost {
 #endif
 using namespace boost::archive;
 using namespace std;
-
-#ifdef ROOT_HAS_NETX
-struct xrootd_source 
-{
-  typedef char char_type;
-  typedef boost::iostreams::source_tag category;
-
-  std::streamsize bytes_read;
-  std::string name;
-  boost::shared_ptr<TXNetFile> netfile;
-
-  xrootd_source(const std::string& s)
-    : bytes_read(0),
-      name(s + "?filetype=raw"),
-      netfile(new TXNetFile(name.c_str()))
-  {
-     if (netfile->TestBits(TXNetFile::kZombie) == kTRUE)
-         log_fatal_stream("Could not open "<<name<<" for reading");
-  }
-
-  std::streamsize read(char* s, std::streamsize n)
-  {
-    if (netfile->ReadBuffer(s, n) == kTRUE) {
-        // end of file
-        return -1;
-    }
-    std::streamsize newsize = netfile->GetBytesRead();
-    std::streamsize r = newsize-bytes_read;
-    bytes_read = newsize;
-    return r;
-  }
-};
-#endif
-
-#ifdef I3_WITH_DCAP
-struct dcap_source 
-{
-  typedef char char_type;
-  struct category 
-    : boost::iostreams::source_tag,
-      boost::iostreams::closable_tag { };
-
-  std::string name;
-  int fd;
-
-  static const std::string prefix;
-
-  dcap_source(const std::string& s)
-  { 
-    dc_setClientActive();
-
-    std::string dcapfile = "";
-    if (s.compare(prefix.size(), 3, "///") == 0) { // file name given as dcap:///pnfs/path/to/file
-      dcapfile = s.substr(prefix.size());
-    } else if (s.compare(prefix.size(), 2, "//") == 0) { // file name given as dcap://site.org/path/to/file
-      dcapfile = s;
-    } else {
-      log_error("Cannot open file '%s' on dCache.", s.c_str());
-      fd = -1;
-      return;
-    }
-
-    fd = dc_open(dcapfile.c_str(), O_RDONLY);
-  }
-
-  std::streamsize read(char* s, std::streamsize n)
-  {
-    dc_errno = 0;
-    std::streamsize nread = dc_read(fd, s, n);
-
-    if (nread == 0) return -1;   // boost::iostreams indicates eof by return value -1
-    if (nread < 0) {
-      log_error("Error reading file.");
-      return -1;
-    }
-
-    return nread;
-  }
-
-  void close() {
-    dc_close(fd);
-  }
-
-};
-
-const std::string dcap_source::prefix = "dcap:";
-
-int dc_errno;
-#endif
 
 // http://stackoverflow.com/a/16775827
 const std::string base64_padding[] = {"", "==","="};
@@ -531,25 +434,7 @@ namespace I3 {
 	}
 #endif
 
-      if (filename.find("root://") == 0)
-	{
-#ifdef ROOT_HAS_NETX
-	  xrootd_source src(filename);
-	  ifs.push(src);
-#else
-	  log_fatal("IceTray was compiled without xrootd support, unable to open file %s",
-		    filename.c_str());
-#endif
-	} 
-      else if (filename.find("dcap://") == 0) {
-#ifdef I3_WITH_DCAP
-	dcap_source src(filename);
-	ifs.push(src);
-#else
-	  log_fatal("IceTray was compiled without dcap support, unable to open file %s",
-		    filename.c_str());
-#endif
-      } else if (filename.find("socket://") == 0) {
+      if (filename.find("socket://") == 0) {
         std::string host, port("1313");
 	host = filename.substr(strlen("socket://"));
 	if (host.rfind(':') != std::string::npos) {

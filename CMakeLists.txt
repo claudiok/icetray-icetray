@@ -18,23 +18,6 @@
 #
 #
 
-#
-#  Check for dcap
-#
-find_library(DCAP_LIBRARIES dcap HINTS ${DCAP_INSTALL_PREFIX}/lib ${DCAP_INSTALL_PREFIX}/lib64)
-find_file(FIND_DCAP_H dcap.h HINTS ${DCAP_INSTALL_PREFIX}/include)
-
-get_filename_component(DCAP_INCLUDE_DIR ${FIND_DCAP_H} PATH)
-
-if (DCAP_LIBRARIES AND DCAP_INCLUDE_DIR)
-  colormsg(GREEN "+-- Found libdcap, enabling dcap support")
-  add_definitions(-DI3_WITH_DCAP)
-  include_directories(${DCAP_INCLUDE_DIR})
-else()
-  colormsg(CYAN "+-- libdcap *not* found, omitting optional dcap support")
-  set(DCAP_LIBRARIES "")
-endif()
-
 # Check for libarchive
 
 if(LIBARCHIVE_FOUND)
@@ -44,12 +27,6 @@ else(LIBARCHIVE_FOUND)
 	colormsg(CYAN "+-- libarchive *not* found, omitting optional tarfile support")
 	set(LIBARCHIVE_LIBRARIES "")
 endif(LIBARCHIVE_FOUND)
-
-# ROOT
-
-if(ROOT_FOUND)
-	set(OPTIONAL_TOOLS root)
-endif(ROOT_FOUND)
 
 i3_project(icetray
   DOCS_DIR resources/docs
@@ -89,11 +66,6 @@ set(ICETRAY_PYTHON_SRC
   private/pybindings/std_cont_pod/std_cont_pod_unsigned.cxx
   private/pybindings/std_cont_pod/std_cont_pod_vector_int.cxx
   private/pybindings/std_cont_pod/std_cont_pod_vector_string.cxx)
-
-if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
-  # On FreeBSD, the backtrace facility is in a separate library.
-  set(I3_BACKTRACE_CXX private/icetray/Backtrace.cxx)
-endif (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
 
 i3_add_library(icetray
   private/icetray/I3Frame.cxx
@@ -161,8 +133,9 @@ i3_add_library(icetray
 
   ${ICETRAY_PYTHON_SRC}
 
+  IWYU
   USE_TOOLS boost python ${OPTIONAL_TOOLS}
-  LINK_LIBRARIES ${BOOST_PYTHON} ${DCAP_LIBRARIES} ${LIBARCHIVE_LIBRARIES}
+  LINK_LIBRARIES ${BOOST_PYTHON} ${LIBARCHIVE_LIBRARIES}
   )
 #
 #  Configure/create directory containing inneresting workspace-wide #defines
@@ -185,6 +158,12 @@ if (${MEMORY_TRACKING})
     PROPERTIES
     COMPILE_FLAGS "-DMEMORY_TRACKING")
 endif (${MEMORY_TRACKING})
+
+if(ROOT_FOUND)
+  set_source_files_properties(private/icetray/I3TrayInfoService.cxx
+    PROPERTIES
+    COMPILE_DEFINITIONS ROOT_RELEASE="${ROOT_VERSION}")
+endif(ROOT_FOUND)
 
 set_source_files_properties(${ICETRAY_PYTHON_SRC}
   PROPERTIES
@@ -277,16 +256,5 @@ add_custom_target(I3Tray.py
 
 add_dependencies(icetray-pybindings I3Tray.py)
 
-#
-# Test pybindings
-#
-i3_add_pybindings(icetray_test
-  private/test-pybindings/module.cxx
-  USE_TOOLS boost python
-  LINK_LIBRARIES ${LIBARCHIVE_LIBRARIES}
-  USE_PROJECTS icetray
-  )
-
 # Install icetray-inspect
 i3_executable_script(inspect resources/icetray-inspect.py)
-
