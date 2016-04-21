@@ -18,13 +18,14 @@ def print_snapshot(snap):
     print('{:<40} | {:>10d}'.format('Total',total))
 
 
-def graph_timeline(timeline, filename, limit=10, exclude=None):
+def graph_timeline(timeline, filename, log=False, limit=10, exclude=None):
     """
     Graph a MemoryTimeline object
 
     Args:
         timeline (MemoryTimeline): The :class:`icecube.icetray.memory.MemoryTimeline` object.
         filename (str): A filename to write to.
+        log (bool): Make the y-axis log scale.
         limit (int): Number of lines to display (from highest to lowest).
         exclude (iterable): Iterable of names to exclude.
     """
@@ -53,10 +54,11 @@ def graph_timeline(timeline, filename, limit=10, exclude=None):
     highest_series = sorted(series,key=lambda k:max(series[k]['v']),reverse=True)[:limit]
     
     max_mem = max(series[highest_series[0]]['v'])
-    ax.set_ylim([0,int(max_mem*1.1)])
+    ax.set_ylim([1 if log else 0,int(max_mem*1.1)])
 
+    plot = getattr(ax,'semilogy') if log else getattr(ax,'plot')
     for k in highest_series:
-        ax.plot(series[k]['t'],series[k]['v'],label=k)
+        plot(series[k]['t'],series[k]['v'],label=k)
     
     # Shrink current axis's height by 20% on the bottom
     #box = ax.get_position()
