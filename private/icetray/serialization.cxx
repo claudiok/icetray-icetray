@@ -38,7 +38,11 @@ namespace archive {
 } // namespace archive
 } // namespace boost
 #else
-#include <boost/archive/impl/archive_serializer_map.ipp>
+
+//#ifndef I3_ARCHIVE_SERIALIZER_MAP
+//#define I3_ARCHIVE_SERIALIZER_MAP
+//#include <boost/archive/impl/archive_serializer_map.ipp>
+//#endif //I3_ARCHIVE_SERIALIZER_MAP
 
 namespace boost {
 namespace archive {

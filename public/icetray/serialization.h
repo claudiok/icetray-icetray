@@ -26,22 +26,17 @@
 
 #ifndef __CINT__
 
-#if BOOST_VERSION < 103600
-#define BOOST_ARCHIVE_CUSTOM_OARCHIVE_TYPES boost::archive::portable_binary_oarchive
-#define BOOST_ARCHIVE_CUSTOM_IARCHIVE_TYPES boost::archive::portable_binary_iarchive
-#endif
-
-#if BOOST_VERSION > 104100
 #include <icetray/i3_extended_type_info.h>
-#endif
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
 #include <icetray/portable_binary_archive.hpp>
 
+#include <icetray/eos_portable_archive/portable_iarchive.hpp>
+#include <icetray/eos_portable_archive/portable_oarchive.hpp>
+
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/base_object.hpp>
-// #include <boost/serialization/is_abstract.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/vector.hpp>
@@ -75,6 +70,8 @@ AsXML(const T& t)
 #define I3_BASIC_SERIALIZABLE(T) \
   template void T::serialize(boost::archive::portable_binary_oarchive&, unsigned); \
   template void T::serialize(boost::archive::portable_binary_iarchive&, unsigned); \
+  template void T::serialize(eos::portable_oarchive&, unsigned);        \
+  template void T::serialize(eos::portable_iarchive&, unsigned); \
   template void T::serialize(boost::archive::xml_iarchive&, unsigned);	\
   template void T::serialize(boost::archive::xml_oarchive&, unsigned);
   
@@ -109,6 +106,8 @@ AsXML(const T& t)
   I3_SERIALIZABLE(T)							\
   template void T::save(boost::archive::portable_binary_oarchive&, unsigned) const; \
   template void T::load(boost::archive::portable_binary_iarchive&, unsigned); \
+  template void T::save(eos::portable_oarchive&, unsigned) const; \
+  template void T::load(eos::portable_iarchive&, unsigned); \
   template void T::load(boost::archive::xml_iarchive&, unsigned);	\
   template void T::save(boost::archive::xml_oarchive&, unsigned) const;
   

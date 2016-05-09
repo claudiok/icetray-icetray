@@ -460,7 +460,8 @@ typedef uint32_t i3frame_version_t; // this could be uint8_t, but is 32 for hyst
 typedef uint32_t i3frame_nslots_t;
 
 typedef char i3frame_tag_t[4];
-const static i3frame_tag_t tag = { '[', 'i', '3', ']' };
+const static i3frame_tag_t old_tag = { '[', 'i', '3', ']' };
+const static i3frame_tag_t new_tag = { '[', 'I', '3', ']' };
 
 const static i3frame_version_t version = 6;
 
@@ -469,9 +470,9 @@ void I3Frame::save(OStreamT& os, const vector<string>& skip) const
 {
   crc_t crc;
 
-  os.write(tag, sizeof(i3frame_tag_t));
+  os.write(new_tag, sizeof(i3frame_tag_t));
   {
-    boost::archive::portable_binary_oarchive poa(os);
+    eos::portable_oarchive poa(os);
     poa << make_nvp("version", version);
     // version does *not* get crc'ed
 
@@ -532,7 +533,7 @@ void I3Frame::save(OStreamT& os, const vector<string>& skip) const
             typedef io::stream<io::back_insert_device<vector<char> > > vecstream_t;
             vecstream_t blobBufStream(value.blob.buf);
             {
-              boost::archive::portable_binary_oarchive blobBufArchive(blobBufStream);
+              eos::portable_oarchive blobBufArchive(blobBufStream);
               try {
                 blobBufArchive << make_nvp("T", value.ptr);
               } catch (const exception &e) {
@@ -573,7 +574,8 @@ bool I3Frame::load(IStreamT& is, const vector<string>& skip, bool verify_cksum)
   //  if not, check to see if it is i3_frame_version_t type with value < 4
   //  and if so call the load_old serialization routine.
   //
-  if (frameTagRead[0] != tag[0])
+  if (frameTagRead[0] != old_tag[0] &&
+      frameTagRead[0] != new_tag[0])
     {  
       // reinterpret tag as version #
 #if BYTE_ORDER == BIG_ENDIAN
@@ -588,24 +590,35 @@ bool I3Frame::load(IStreamT& is, const vector<string>& skip, bool verify_cksum)
     }
 
   // dispatch to load_old didn't happen. verify that this is an .i3 file
-  int cmp = memcmp(frameTagRead, tag, 4);
-  if (cmp != 0)
+  int cmp_i3 = memcmp(frameTagRead, old_tag, 4);
+  int cmp_I3 = memcmp(frameTagRead, new_tag, 4);
+  if (cmp_i3 != 0 && cmp_I3 != 0)
     log_fatal("Frame tag found is %c%c%c%c, not [i3] as expected.  Is this really an .i3 file?",
 	      frameTagRead[0], frameTagRead[1], frameTagRead[2], frameTagRead[3]);
 
   // if we are here, this looks like an .i3 file.  Get the frame serialization version.
   {
-    boost::archive::portable_binary_iarchive bufArchive(is);
-    // this might return garbage and set eof() on stream
-    i3frame_version_t versionRead;
-    bufArchive >> make_nvp("i3version", versionRead);
+    if(cmp_i3 == 0){
+      boost::archive::portable_binary_iarchive bufArchive(is);
+      // this might return garbage and set eof() on stream
+      i3frame_version_t versionRead;
+      bufArchive >> make_nvp("i3version", versionRead);
 
-    if (versionRead == 4)
-      return load_v4(is, skip);
-    else if (versionRead == 5 || versionRead == 6)
-      return load_v56(is, skip, versionRead == 6, verify_cksum);
-    else
-      log_fatal("Frame is version %u, this software can read only up to version %d", versionRead, version);
+      if (versionRead == 4)
+        return load_v4(is, skip);
+      else if (versionRead == 5 || versionRead == 6)
+        return load_v56(is, skip, versionRead == 6, verify_cksum);
+      else
+        log_fatal("Frame is version %u, this software can read only up to version %d", versionRead, version);
+    }
+
+      if(cmp_I3 == 0){
+        eos::portable_iarchive bufArchive(is);
+        // this might return garbage and set eof() on stream
+        i3frame_version_t versionRead;
+        bufArchive >> make_nvp("i3version", versionRead);
+        return load_eos(is, skip, versionRead == 6, verify_cksum);
+    }
   }
 
   return false;
@@ -632,6 +645,100 @@ bool I3Frame::load_v56(IStreamT& is, const vector<string>& skip, bool v6, bool v
   // read checksum plus entire frame and process/test checksum
   {
     boost::archive::portable_binary_iarchive bia(is);
+
+    bia >> make_nvp("stream", stop_);
+    if (verify)
+      crcit(stop_.id(), crc, calc_crc);
+
+    i3frame_nslots_t nslots;
+    bia >> make_nvp("size", nslots);
+    if (verify)
+      crcit(nslots, crc, calc_crc);
+#ifdef USING_GCC_EXT_HASH_MAP
+    map_.resize(nslots);
+#else
+    map_.reserve(nslots);
+#endif
+
+    for (unsigned int i = 0; i < nslots; i++)
+      {
+        string key, type_name;
+
+        bia >> make_nvp("key", key);
+        if (verify)
+	  crcit(key, crc, calc_crc);
+
+        bia >> make_nvp("type_name", type_name);
+        if (verify)
+	  crcit(type_name, crc, calc_crc);
+
+        bool skipIt = false;
+        for (vector<string>::const_iterator skipIter = skip.begin();
+             !skipIt && (skipIter != skip.end());
+             skipIter++)
+          {
+            boost::regex reg(*skipIter);
+            skipIt = boost::regex_match(key, reg);
+          }
+
+        if (skipIt)
+          {
+	    uint32_t count;
+	    bia >> make_nvp("count", count);
+#ifdef WORKAROUND_LIBCPP_ISTREAM_IGNORE_ISSUE
+	    istream_ignore_workaround(is, count);
+#else
+	    is.ignore(count);
+#endif
+          }
+        else
+          {
+            boost::shared_ptr<value_t> vp(new value_t);
+	    vp->stream = stop_.id();
+            map_[key] = vp;
+            blob_t& blob = vp->blob;
+	    try {
+	      bia >> make_nvp("buf", blob.buf);
+	    } catch (const std::bad_alloc& e) {
+	      log_fatal("Fatal length error while trying to deserialize object '%s' of type %s: object exceeds its maximum permitted size.", key.c_str(), type_name.c_str());
+	    }
+            if (blob.buf.size() == 0)
+              log_fatal("read a zero-size buffer from input stream?");
+            if (verify)
+	      crcit(blob.buf, crc, calc_crc);
+            blob.type_name = type_name;
+          }
+      }
+
+    bia >> make_nvp("checksum", checksumRead);
+    if (verify && calc_crc && (crc.checksum() != checksumRead))
+      log_fatal("checksums don't match");
+  }
+
+  return true;
+}
+
+//
+//
+//  load versions 5 and 6 (latest)
+//  these differ in using CRC16-CCITT vs. CRC32
+//
+//
+template <typename IStreamT>
+bool I3Frame::load_eos(IStreamT& is, const vector<string>& skip, bool v6, bool verify)
+{
+  if (!is.good())
+    log_fatal("attempt to read from stream in error state");
+
+  i3frame_checksum_t checksumRead;
+
+  crc_t crc(v6);
+  bool calc_crc = (skip.size() == 0);
+
+  // read size of the entire (serialized) frame
+  // read checksum plus entire frame and process/test checksum
+  {
+    eos::portable_iarchive bia(is);
 
     bia >> make_nvp("stream", stop_);
     if (verify)
@@ -967,13 +1074,12 @@ I3FrameObjectConstPtr I3Frame::get_impl(map_t::const_reference pr,
 
 
 template bool I3Frame::load(io::filtering_istream&, const vector<string>&, bool);
-template bool I3Frame::load(istream& is, const vector<string>&, bool);
-template bool I3Frame::load(ifstream& is, const vector<string>&, bool);
-template bool I3Frame::load(boost::interprocess::bufferstream& is, const vector<string>&, bool);
-template bool I3Frame::load(boost::interprocess::basic_vectorstream<std::vector<
-char> >& is, const vector<string>&, bool);
+template bool I3Frame::load(istream&, const vector<string>&, bool);
+template bool I3Frame::load(ifstream&, const vector<string>&, bool);
+//template bool I3Frame::load(boost::interprocess::bufferstream&, const vector<string>&, bool);
+//template bool I3Frame::load(boost::interprocess::basic_vectorstream<std::vector<char> >&, const vector<string>&, bool);
 
 template void I3Frame::save(io::filtering_ostream&, const vector<string>&) const;
-template void I3Frame::save(boost::interprocess::basic_vectorstream<std::vector<char> >&, const vector<string>&) const;
+//template void I3Frame::save(boost::interprocess::basic_vectorstream<std::vector<char> >&, const vector<string>&) const;
 template void I3Frame::save(ostream&, const vector<string>&) const;
 template void I3Frame::save(ofstream&, const std::vector<string>&) const;
