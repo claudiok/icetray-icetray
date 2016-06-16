@@ -94,7 +94,7 @@ I3Tray::report_usage(int sig)
 	BOOST_FOREACH(const name_pair &pair, inorder) {
 		const string &name = pair.second;
 		const I3PhysicsUsage &ru = mru[pair.second];
-		printf("%40s: %6u calls to physics %9.2fs user %9.2fs system\n",
+		log_info("%40s: %6u calls to physics %9.2fs user %9.2fs system\n",
 		    name.c_str(), ru.ncall, ru.usertime, ru.systime);
 		if ((acc_time += ru.usertime)/total_time > 0.9)
 			break;
@@ -466,7 +466,14 @@ I3Tray::Execute(unsigned maxCount)
 	signal(SIGTERM, set_suspend_flag); // Condor sends this to end jobs
 #ifdef SIGINFO
 	executing_tray = this;
-	signal(SIGINFO, report_usage);
+	{
+		struct sigaction oldact;
+		sigaction(SIGINFO, NULL, &oldact);
+		// only install a SIGINFO handler if there is none yet
+		if (oldact.sa_sigaction==NULL) {
+			signal(SIGINFO, report_usage);
+		}
+	}
 #endif
 
 	Configure();

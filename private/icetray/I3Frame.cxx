@@ -66,7 +66,7 @@ namespace {
 
 using namespace std;
 namespace io = boost::iostreams;
-namespace ar = boost::archive;
+namespace ar = icecube::archive;
 
 template <class Archive>
 void I3Frame::Stream::serialize(Archive& ar, unsigned version)
@@ -428,7 +428,7 @@ namespace
     uint32_t size = container.size();
 #if BYTE_ORDER == BIG_ENDIAN
     uint32_t swapped = size;
-    boost::archive::portable::swap(swapped);
+    icecube::archive::portable::swap(swapped);
     crc.process_bytes(&swapped, sizeof(size));
 #else
     crc.process_bytes(&size, sizeof(size));
@@ -445,7 +445,7 @@ namespace
       return;
 #if BYTE_ORDER == BIG_ENDIAN
     T swapped = pod;
-    boost::archive::portable::swap(swapped);
+    icecube::archive::portable::swap(swapped);
     crc.process_bytes(&swapped, sizeof(T));
 #else
     crc.process_bytes(&pod, sizeof(T));
@@ -464,6 +464,68 @@ const static i3frame_tag_t tag = { '[', 'i', '3', ']' };
 
 const static i3frame_version_t version = 6;
 
+
+void I3Frame::create_blob_impl(I3Frame::value_t &value)
+{
+  const I3FrameObject& obj=*(value.ptr.get());
+  value.blob.type_name = value.ptr ? I3::name_of(typeid(obj)) : "(null)";
+
+  typedef io::stream<io::back_insert_device<vector<char> > > vecstream_t;
+  vecstream_t blobBufStream(value.blob.buf);
+  {
+    icecube::archive::portable_binary_oarchive blobBufArchive(blobBufStream);
+    blobBufArchive << make_nvp("T", value.ptr);
+  }
+  blobBufStream.flush();
+}
+
+void I3Frame::create_blob(bool drop_memory_data, const std::string &key) const
+{
+  map_t::const_iterator iter = map_.find(key);
+  if (iter == map_.end())
+    log_fatal("Tried to create a blob for unknown key %s", key.c_str());
+  value_t& value = *(iter->second);
+
+  if (value.blob.buf.size() == 0) {
+    // only create a blob if there is none yet
+    try {
+      create_blob_impl(value);
+    } catch (const exception &e) {
+      log_fatal("caught \"%s\" while writing frame object \"%s\" of type \"%s\"",
+                e.what(), key.c_str(), value.blob.type_name.c_str());
+    }
+  }
+
+  if (drop_memory_data) {
+    // drop the memory shared pointer if requested
+    value.ptr.reset();
+  }
+}
+
+void I3Frame::create_blobs(bool drop_memory_data, const std::vector<std::string>& skip) const
+{
+  for (map_t::iterator iter = map_.begin();
+       iter != map_.end();
+       iter++)
+  {
+    bool skipIt = false;
+    for (vector<string>::const_iterator skipIter = skip.begin();
+         !skipIt && (skipIter != skip.end());
+         skipIter++)
+      {
+        boost::regex reg(*skipIter);
+        skipIt = boost::regex_match(iter->first.string, reg);
+      }
+
+    if (iter->second->stream != stop_.id())
+      skipIt = true;
+
+    if (skipIt) continue;
+
+    create_blob(drop_memory_data, iter->first.string);
+  }
+}
+
 template <typename OStreamT>
 void I3Frame::save(OStreamT& os, const vector<string>& skip) const
 {
@@ -471,7 +533,7 @@ void I3Frame::save(OStreamT& os, const vector<string>& skip) const
 
   os.write(tag, sizeof(i3frame_tag_t));
   {
-    boost::archive::portable_binary_oarchive poa(os);
+    icecube::archive::portable_binary_oarchive poa(os);
     poa << make_nvp("version", version);
     // version does *not* get crc'ed
 
@@ -480,7 +542,7 @@ void I3Frame::save(OStreamT& os, const vector<string>& skip) const
 
     // save map values in a set to check, if keys (guaranteed in a map) and pointers are
     // unique.  skip values, where key matches an element in vector skip.
-    set<map_t::value_type*> mapAsSet;
+    std::set<std::string> mapAsSet;
     for (map_t::iterator iter = map_.begin();
          iter != map_.end();
          iter++)
@@ -494,57 +556,50 @@ void I3Frame::save(OStreamT& os, const vector<string>& skip) const
             skipIt = boost::regex_match(iter->first.string, reg);
           }
 
-	if (iter->second->stream != stop_.id())
-	  skipIt = true;
+        if (iter->second->stream != stop_.id())
+          skipIt = true;
 
         if (skipIt) continue;
-        
-        if (!mapAsSet.insert(&*iter).second)
-          log_fatal("frame contains a duplicated pointer for \"%s\"", iter->first.string.c_str());
+
+        mapAsSet.insert(iter->first.string);
       }
 
     i3frame_nslots_t size = mapAsSet.size();
     poa << make_nvp("size", size);
     crcit(size, crc);
-    
-    for (set<map_t::value_type*>::iterator iter = mapAsSet.begin();
+
+    for (std::set<std::string>::iterator iter = mapAsSet.begin();
          iter != mapAsSet.end();
          iter++)
       {
-        map_t::value_type& i = **iter;
-        const string &key = i.first.string;
-        value_t& value = *i.second;
+        const string &key = *iter;
+        value_t& value = *map_[key];
 
         poa << make_nvp("key", key);
-	crcit(key, crc);
-        if (value.blob.buf.size()) // there's a buffer there.  use it and it's type_name.
+        crcit(key, crc);
+        if (value.blob.buf.size()) // there's a buffer there.  use it and its type_name.
           {
             string type_name = value.blob.type_name;
             poa << make_nvp("type_name", type_name);
-	    crcit(type_name, crc);
+            crcit(type_name, crc);
             poa << make_nvp("buf", value.blob.buf);
-	    crcit(value.blob.buf, crc);
+            crcit(value.blob.buf, crc);
           }
         else
           {
-            const I3FrameObject& obj=*(value.ptr.get());
-            value.blob.type_name = value.ptr ? I3::name_of(typeid(obj)) : "(null)";
-            poa << make_nvp("type_name", value.blob.type_name);
-	    crcit(value.blob.type_name, crc);
-	    typedef io::stream<io::back_insert_device<vector<char> > > vecstream_t;
-            vecstream_t blobBufStream(value.blob.buf);
-            {
-              boost::archive::portable_binary_oarchive blobBufArchive(blobBufStream);
               try {
-                blobBufArchive << make_nvp("T", value.ptr);
+              create_blob_impl(value);
               } catch (const exception &e) {
                 log_fatal("caught \"%s\" while writing frame object \"%s\" of type \"%s\"", 
                           e.what(), key.c_str(), value.blob.type_name.c_str());
               } 
-            }
-            blobBufStream.flush();
+
+            string type_name = value.blob.type_name;
+            poa << make_nvp("type_name", type_name);
+            crcit(type_name, crc);
             poa << make_nvp("buf", value.blob.buf);
-	    crcit(value.blob.buf, crc);
+            crcit(value.blob.buf, crc);
+
             if (drop_blobs_)
               value.blob.reset();
           }
@@ -581,7 +636,7 @@ bool I3Frame::load(IStreamT& is, const vector<string>& skip, bool verify_cksum)
 #if BYTE_ORDER == BIG_ENDIAN
       BOOST_STATIC_ASSERT(sizeof(frameTagRead) == 4);
       uint32_t &frameTagInt = reinterpret_cast<uint32_t &>(frameTagRead);
-      boost::archive::portable::swap(frameTagInt);
+      icecube::archive::portable::swap(frameTagInt);
 #endif
       const i3frame_version_t* tmpVersion =
 	reinterpret_cast<i3frame_version_t*>(frameTagRead);
@@ -597,7 +652,7 @@ bool I3Frame::load(IStreamT& is, const vector<string>& skip, bool verify_cksum)
 
   // if we are here, this looks like an .i3 file.  Get the frame serialization version.
   {
-    boost::archive::portable_binary_iarchive bufArchive(is);
+    icecube::archive::portable_binary_iarchive bufArchive(is);
     // this might return garbage and set eof() on stream
     i3frame_version_t versionRead;
     bufArchive >> make_nvp("i3version", versionRead);
@@ -633,7 +688,7 @@ bool I3Frame::load_v56(IStreamT& is, const vector<string>& skip, bool v6, bool v
   // read size of the entire (serialized) frame
   // read checksum plus entire frame and process/test checksum
   {
-    boost::archive::portable_binary_iarchive bia(is);
+    icecube::archive::portable_binary_iarchive bia(is);
 
     bia >> make_nvp("stream", stop_);
     if (verify)
@@ -726,7 +781,7 @@ bool I3Frame::load_v4(IStreamT& is, const vector<string>& skip)
   // read size of the entire (serialized) frame
   // read checksum plus entire frame and process/test checksum
   {
-    boost::archive::portable_binary_iarchive bia(is);
+    icecube::archive::portable_binary_iarchive bia(is);
 
     bia >> make_nvp("size", sizeRead);
     bia >> make_nvp("checksum", checksumRead);
@@ -747,7 +802,7 @@ bool I3Frame::load_v4(IStreamT& is, const vector<string>& skip)
 
     //    io::array_source bufSource(&(buf_[0]), buf_.size());
     //    io::filtering_istream fis(bufSource);
-    //    boost::archive::portable_binary_iarchive bia(fis);
+    //    icecube::archive::portable_binary_iarchive bia(fis);
 
     bia >> make_nvp("Stream", stop_);
     std::vector<event_t> tmp_history_;
@@ -818,7 +873,7 @@ bool I3Frame::load_old(IStream& is,
   if (!is.good())
     log_fatal("attempt to read from stream in error state");
 
-  boost::archive::portable_binary_iarchive bufArchive(is);
+  icecube::archive::portable_binary_iarchive bufArchive(is);
 
   std::vector<event_t> history_;
   if (versionRead > 1)
@@ -950,7 +1005,7 @@ I3FrameObjectConstPtr I3Frame::get_impl(map_t::const_reference pr,
 
   io::array_source src(&(value.blob.buf[0]), value.blob.buf.size());
   io::filtering_istream fis(src);
-  boost::archive::portable_binary_iarchive pia(fis);
+  icecube::archive::portable_binary_iarchive pia(fis);
   I3FrameObjectPtr fop;
   try {
     pia >> fop;

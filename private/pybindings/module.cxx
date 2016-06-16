@@ -67,13 +67,13 @@ BOOST_PYTHON_FUNCTION_OVERLOADS(load_impl_overloads, load_impl,1,2);
 
 BOOST_PYTHON_MODULE(icetray)
 {
-  //
-  // You *must* do this first, or you get the nasty error
-  //   void boost::serialization::detail::tkmap::insert(const
-  //   boost::serialization::extended_type_info*): Assertion `lookup(eti) ==
-  //   slf->m_map.tend()' failed.
-  //
-  load_project("icetray", false);
+  // 
+  // You *must* do this first, or you get the nasty error 
+  //   void icecube::serialization::detail::tkmap::insert(const
+  //   icecube::serialization::extended_type_info*): Assertion `lookup(eti) ==  
+  //   slf->m_map.tend()' failed. 
+  // 
+  load_project("icetray", false); 
 
   def("load", &load_impl, load_impl_overloads(args("name","verbose")));
 

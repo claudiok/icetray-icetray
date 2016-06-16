@@ -130,10 +130,12 @@ i3_add_library(icetray
   private/modules/AllParametersModule.cxx
   private/modules/ContextFreeServiceTestModule.cxx
   private/modules/MaintainInitialValuesModule.cxx
+  private/modules/CreateBlobs.cxx
 
   ${ICETRAY_PYTHON_SRC}
 
   IWYU
+  USE_PROJECTS serialization
   USE_TOOLS boost python ${OPTIONAL_TOOLS}
   LINK_LIBRARIES ${BOOST_PYTHON} ${LIBARCHIVE_LIBRARIES}
   )
