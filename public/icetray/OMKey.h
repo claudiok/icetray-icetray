@@ -26,17 +26,18 @@
 #include "Utility.h"
 #include <iostream>
 #include <icetray/IcetrayFwd.h>
-#include <icetray/I3FrameObject.h>
 #include <icetray/serialization.h>
+#include <icetray/I3FrameObject.h>
 
-static const unsigned omkey_version_ = 1;
+static const unsigned omkey_version_ = 2;
 
 /**
  * @brief A small class which is the string number, om number
  * and pmt number for a specific PMT inside a DOM.
- * For IceCube, the PMT number will always be "0"
- * and "PMT" is equivalent to "DOM".
  *
+ * For IceCube, the PMT number will always be 0
+ * and "PMT" is equivalent to "DOM". For IceTop, the PMT number
+ * can be 0 or 1.
  */
 class OMKey : public I3FrameObject
 {
@@ -105,8 +106,14 @@ class OMKey : public I3FrameObject
     if(omNumber_>=61 && omNumber_<=64) return true;
     else return false;
   }
-  
 
+  /**
+   * bool function: is it a scintillator DOM?
+   */
+  bool IsScintillator() const {
+    if(omNumber_>=65 && omNumber_<=66) return true;
+    else return false;
+  }
 
   /**
    * equality operator.  
@@ -150,7 +157,12 @@ class OMKey : public I3FrameObject
   friend class boost::serialization::access;
 
   template <class Archive>
-  void serialize(Archive& ar, unsigned version);
+  void save(Archive& ar, unsigned version) const;
+
+  template <class Archive>
+  void load(Archive& ar, unsigned version);
+
+  BOOST_SERIALIZATION_SPLIT_MEMBER();
 };
 
 BOOST_CLASS_VERSION(OMKey,omkey_version_);

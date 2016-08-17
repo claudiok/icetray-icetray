@@ -24,14 +24,30 @@
 
 OMKey::~OMKey() { }
 
-template <typename Archive>
-void 
-OMKey::serialize (Archive & ar, unsigned version)
+template <class Archive>
+void OMKey::save(Archive& ar, unsigned version) const
+{
+  ar & make_nvp("StringNumber",  stringNumber_);
+  ar & make_nvp("OMNumber",  omNumber_);
+  ar & make_nvp("PMTNumber",  pmtNumber_);
+}
+
+template <class Archive>
+void OMKey::load(Archive& ar, unsigned version)
 {
   if (version>omkey_version_)
-    log_fatal("Attempting to read version %u from file but running version %u of OMKey class.",version,omkey_version_);
+    log_fatal("Attempting to read version %u from file but running version %u of OMKey class.",
+              version,omkey_version_);
 
-  ar & make_nvp("I3FrameObject", base_object< I3FrameObject >(*this));
+  if (version<=1) {
+    // I know this looks weird, OMKey still inherits from I3FrameObject in this
+    // twilight zone release, but I3FrameObject has no state, so I don't care 
+    // that it's deserialized into a dummy object.  I'm only doing this because
+    // there are some funky bits in old the stream and we need to keep the streams 
+    // aligned...whatever you do *DON'T* cross the streams.
+    I3FrameObject fo;
+    ar & make_nvp("I3FrameObject", fo);
+  }
   ar & make_nvp("StringNumber",  stringNumber_);
   ar & make_nvp("OMNumber",  omNumber_);
     
@@ -42,7 +58,7 @@ OMKey::serialize (Archive & ar, unsigned version)
   }
 }
 
-I3_SERIALIZABLE(OMKey);
+I3_SPLIT_SERIALIZABLE(OMKey);
 
 #include <sstream>
 #include <boost/regex.hpp>
